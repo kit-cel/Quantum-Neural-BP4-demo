@@ -12,7 +12,7 @@ int main() {
     double ep0 = 0.1;
     stabilizerCodesType codeType = stabilizerCodesType::GeneralizedBicycle;
     stabilizerCodes code(n, k, m, codeType);
-    code.checksymplectic();
+    code.check_symplectic();
 
     int limit1 = 300;
     int limit2 = 45000000;
@@ -38,7 +38,7 @@ int main() {
         {
             while (failure <= limit1 && total_decoding <= limit2) {
                 stabilizerCodes code(n, k, m, codeType, trained);
-                code.addErrorGivenEpsilon(epsilon);
+                code.add_error_given_epsilon(epsilon);
                 std::vector<bool> success;
                 success = code.decode(decIterNum, ep0);
 #pragma omp critical

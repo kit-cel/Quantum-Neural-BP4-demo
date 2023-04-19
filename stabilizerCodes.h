@@ -11,7 +11,7 @@
 #include <random>
 #include <string>
 #include <vector>
-enum class stabilizerCodesType { GeneralizedBicycle = 0, HpergraphProduct = 1, toric = 3 };
+enum class stabilizerCodesType { GeneralizedBicycle = 0, HypergraphProduct = 1, toric = 3 };
 
 class stabilizerCodes {
   public:
@@ -19,24 +19,24 @@ class stabilizerCodes {
 
     std::vector<bool> decode(unsigned int L, double epsilon);
 
-    std::vector<bool> floodingDecode(unsigned int L, double epsilon, const std::vector<unsigned> error);
+    std::vector<bool> flooding_decode(unsigned int L, double epsilon, const std::vector<unsigned> error);
 
-    std::vector<bool> checkSucess(const double *Taux, const double *Tauy, const double *Tauz);
-    void loadWeights_cn();
-    void loadWeights_vn();
-    void loadWeights_llr();
-    void readH();
-    void readG();
-    inline unsigned traceInnerProduct(unsigned a, unsigned b);
-    bool checksymplectic();
+    std::vector<bool> check_success(const double *Taux, const double *Tauy, const double *Tauz);
+    void load_cn_weights();
+    void load_vn_weights();
+    void load_llr_weights();
+    void read_H();
+    void read_G();
+    inline unsigned trace_inner_product(unsigned a, unsigned b);
+    bool check_symplectic();
 
-    void addErrorGivenEpsilon(double epsilon);
+    void add_error_given_epsilon(double epsilon);
 
-    void addErrorGivenPositions(int pos[], int error[], int size);
+    void add_error_given_positions(int pos[], int error[], int size);
 
-    void calSyndrome(); // also check if the error is all 0, if true, not decoding needed
+    void calculate_syndrome(); // also check if the error is all 0, if true, not decoding needed
 
-    double bielief_quantize(double Taux, double Tauy, double Tauz);
+    double quantize_belief(double Taux, double Tauy, double Tauz);
 
     bool print_msg = false;
 

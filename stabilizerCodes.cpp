@@ -14,21 +14,21 @@ stabilizerCodes::stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerC
 std::vector<bool> stabilizerCodes::decode(unsigned int L, double epsilon) {
     if (errorString.empty())
         return {true, true};
-    readH();
-    readG();
+    read_H();
+    read_G();
     if (mTrained) {
-        loadWeights_cn();
-        loadWeights_llr();
-        loadWeights_vn();
+        load_cn_weights();
+        load_llr_weights();
+        load_vn_weights();
     }
-    calSyndrome();
+    calculate_syndrome();
     error_hat = std::vector<unsigned>(N, 0);
-    return floodingDecode(L, epsilon, error);
+    return flooding_decode(L, epsilon, error);
 }
 
-bool stabilizerCodes::checksymplectic() {
-    readH();
-    readG();
+bool stabilizerCodes::check_symplectic() {
+    read_H();
+    read_G();
     unsigned *vec1;
     vec1 = (unsigned *)malloc(N * sizeof(unsigned *));
     unsigned *vec2;
@@ -49,7 +49,7 @@ bool stabilizerCodes::checksymplectic() {
             }
             unsigned syn_check = 0;
             for (int j = 0; j < N; j++) {
-                syn_check += traceInnerProduct(vec1[j], vec2[j]);
+                syn_check += trace_inner_product(vec1[j], vec2[j]);
             }
             assert((syn_check % 2) == 0);
         }
@@ -57,7 +57,7 @@ bool stabilizerCodes::checksymplectic() {
         for (int i = 0; i < G_rows; i++) {
             unsigned syn_check = 0;
             for (int j = 0; j < N; j++) {
-                syn_check += traceInnerProduct(vec1[j], G[i][j]);
+                syn_check += trace_inner_product(vec1[j], G[i][j]);
             }
             assert((syn_check % 2) == 0);
         }
@@ -68,7 +68,7 @@ bool stabilizerCodes::checksymplectic() {
     return true;
 }
 
-void stabilizerCodes::addErrorGivenEpsilon(double epsilon) {
+void stabilizerCodes::add_error_given_epsilon(double epsilon) {
     error.clear();
     errorString.clear();
     std::uniform_real_distribution<double> dist(0, 1);
@@ -95,13 +95,13 @@ void stabilizerCodes::addErrorGivenEpsilon(double epsilon) {
     }
 }
 
-void stabilizerCodes::addErrorGivenPositions(int *pos, int *error, int size) {}
+void stabilizerCodes::add_error_given_positions(int *pos, int *error, int size) {}
 
-void stabilizerCodes::readH() {
+void stabilizerCodes::read_H() {
     std::string codeTypeString;
     if (mycodetype == stabilizerCodesType::GeneralizedBicycle)
         codeTypeString = "GB";
-    else if (mycodetype == stabilizerCodesType::HpergraphProduct)
+    else if (mycodetype == stabilizerCodesType::HypergraphProduct)
         codeTypeString = "HP";
     else if (mycodetype == stabilizerCodesType::toric)
         codeTypeString = "toric";
@@ -204,11 +204,11 @@ void stabilizerCodes::readH() {
     checkVal = checkValues;
     varVal = VariableValues;
 }
-void stabilizerCodes::readG() {
+void stabilizerCodes::read_G() {
     std::string codeTypeString;
     if (mycodetype == stabilizerCodesType::GeneralizedBicycle)
         codeTypeString = "GB";
-    else if (mycodetype == stabilizerCodesType::HpergraphProduct)
+    else if (mycodetype == stabilizerCodesType::HypergraphProduct)
         codeTypeString = "HP";
     else if (mycodetype == stabilizerCodesType::toric)
         codeTypeString = "toric";
@@ -234,7 +234,7 @@ void stabilizerCodes::readG() {
     } else
         std::cout << "Unable to open file" << std::endl;
 }
-double stabilizerCodes::bielief_quantize(double Tau, double Tau1, double Tau2) {
+double stabilizerCodes::quantize_belief(double Tau, double Tau1, double Tau2) {
     double nom = log1p(exp(-1.0 * Tau));
     double denom = std::max(-1.0 * Tau1, -1.0 * Tau2) + log1p(exp(-1.0 * fabs((Tau1 - Tau2))));
     double ret_val = nom - denom;
@@ -242,7 +242,7 @@ double stabilizerCodes::bielief_quantize(double Tau, double Tau1, double Tau2) {
     return ret_val;
 }
 
-unsigned stabilizerCodes::traceInnerProduct(unsigned int a, unsigned int b) {
+unsigned stabilizerCodes::trace_inner_product(unsigned int a, unsigned int b) {
     if (a == 0 || b == 0)
         return 0;
     if (a == b)
@@ -251,7 +251,7 @@ unsigned stabilizerCodes::traceInnerProduct(unsigned int a, unsigned int b) {
 }
 
 // TODO: reimplement flooding decode
-std::vector<bool> stabilizerCodes::floodingDecode(unsigned int L, double epsilon, const std::vector<unsigned> error) {
+std::vector<bool> stabilizerCodes::flooding_decode(unsigned int L, double epsilon, const std::vector<unsigned> error) {
     double num_elements_in_H = 0;
     for (int i = 0; i < N; i++) {
         num_elements_in_H += dv[i];
@@ -379,17 +379,17 @@ std::vector<bool> stabilizerCodes::floodingDecode(unsigned int L, double epsilon
                     Tauxi = Taux[Vidx];
                     Tauzi = Tauz[Vidx] - mc2v[Nv[Vidx][jj]][Nvk[Vidx][jj]];
                     Tauyi = Tauy[Vidx] - mc2v[Nv[Vidx][jj]][Nvk[Vidx][jj]];
-                    temp = bielief_quantize(Tauxi, Tauyi, Tauzi);
+                    temp = quantize_belief(Tauxi, Tauyi, Tauzi);
                 } else if (varVal[Vidx][jj] == 2) {
                     Tauxi = Taux[Vidx] - mc2v[Nv[Vidx][jj]][Nvk[Vidx][jj]];
                     Tauzi = Tauz[Vidx];
                     Tauyi = Tauy[Vidx] - mc2v[Nv[Vidx][jj]][Nvk[Vidx][jj]];
-                    temp = bielief_quantize(Tauzi, Tauyi, Tauxi);
+                    temp = quantize_belief(Tauzi, Tauyi, Tauxi);
                 } else if (varVal[Vidx][jj] == 3) {
                     Tauxi = Taux[Vidx] - mc2v[Nv[Vidx][jj]][Nvk[Vidx][jj]];
                     Tauzi = Tauz[Vidx] - mc2v[Nv[Vidx][jj]][Nvk[Vidx][jj]];
                     Tauyi = Tauy[Vidx];
-                    temp = bielief_quantize(Tauyi, Tauxi, Tauzi);
+                    temp = quantize_belief(Tauyi, Tauxi, Tauzi);
                 } else
                     throw std::invalid_argument("something is wrong");
                 double limit = 60;
@@ -425,7 +425,7 @@ std::vector<bool> stabilizerCodes::floodingDecode(unsigned int L, double epsilon
             }
             std::cout << std::endl;
         }
-        success = checkSucess(Taux, Tauy, Tauz);
+        success = check_success(Taux, Tauy, Tauz);
         if (success[0])
             break;
     }
@@ -445,17 +445,17 @@ std::vector<bool> stabilizerCodes::floodingDecode(unsigned int L, double epsilon
     return success;
 }
 
-void stabilizerCodes::calSyndrome() {
+void stabilizerCodes::calculate_syndrome() {
     for (int i = 0; i < M; i++) {
         unsigned check = 0;
         for (int j = 0; j < dc[i]; j++) {
-            check += traceInnerProduct(error[Mc[i][j]], checkVal[i][j]);
+            check += trace_inner_product(error[Mc[i][j]], checkVal[i][j]);
         }
         syn.push_back(check % 2);
     }
 }
 
-std::vector<bool> stabilizerCodes::checkSucess(const double *Taux, const double *Tauy, const double *Tauz) {
+std::vector<bool> stabilizerCodes::check_success(const double *Taux, const double *Tauy, const double *Tauz) {
     std::vector<bool> success(2, false);
     error_hat = std::vector<unsigned>(N, 0);
     errorHatString.clear();
@@ -476,7 +476,7 @@ std::vector<bool> stabilizerCodes::checkSucess(const double *Taux, const double 
     for (int i = 0; i < M; i++) {
         unsigned check = 0;
         for (int j = 0; j < dc[i]; j++) {
-            check += traceInnerProduct(error_hat[Mc[i][j]], checkVal[i][j]);
+            check += trace_inner_product(error_hat[Mc[i][j]], checkVal[i][j]);
         }
         if ((check % 2) != syn[i]) {
             return success;
@@ -486,7 +486,7 @@ std::vector<bool> stabilizerCodes::checkSucess(const double *Taux, const double 
     for (int i = 0; i < G_rows; i++) {
         unsigned check = 0;
         for (int j = 0; j < N; j++) {
-            check += (traceInnerProduct(error[j], G[i][j]) + traceInnerProduct(error_hat[j], G[i][j]));
+            check += (trace_inner_product(error[j], G[i][j]) + trace_inner_product(error_hat[j], G[i][j]));
         }
         if ((check % 2) != 0) {
             return success;
@@ -496,11 +496,11 @@ std::vector<bool> stabilizerCodes::checkSucess(const double *Taux, const double 
     return success;
 }
 
-void stabilizerCodes::loadWeights_cn() {
+void stabilizerCodes::load_cn_weights() {
     std::string codeTypeString;
     if (mycodetype == stabilizerCodesType::GeneralizedBicycle)
         codeTypeString = "GB";
-    else if (mycodetype == stabilizerCodesType::HpergraphProduct)
+    else if (mycodetype == stabilizerCodesType::HypergraphProduct)
         codeTypeString = "HP";
     else if (mycodetype == stabilizerCodesType::toric)
         codeTypeString = "toric";
@@ -551,11 +551,11 @@ void stabilizerCodes::loadWeights_cn() {
         std::cout << "Unable to open file" << std::endl;
 }
 
-void stabilizerCodes::loadWeights_llr() {
+void stabilizerCodes::load_llr_weights() {
     std::string codeTypeString;
     if (mycodetype == stabilizerCodesType::GeneralizedBicycle)
         codeTypeString = "GB";
-    else if (mycodetype == stabilizerCodesType::HpergraphProduct)
+    else if (mycodetype == stabilizerCodesType::HypergraphProduct)
         codeTypeString = "HP";
     else if (mycodetype == stabilizerCodesType::toric)
         codeTypeString = "toric";
@@ -593,11 +593,11 @@ void stabilizerCodes::loadWeights_llr() {
     weights_llr = weight_llr;
 }
 
-void stabilizerCodes::loadWeights_vn() {
+void stabilizerCodes::load_vn_weights() {
     std::string codeTypeString;
     if (mycodetype == stabilizerCodesType::GeneralizedBicycle)
         codeTypeString = "GB";
-    else if (mycodetype == stabilizerCodesType::HpergraphProduct)
+    else if (mycodetype == stabilizerCodesType::HypergraphProduct)
         codeTypeString = "HP";
     else if (mycodetype == stabilizerCodesType::toric)
         codeTypeString = "toric";
