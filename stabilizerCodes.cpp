@@ -4,7 +4,6 @@
 #include "stabilizerCodes.h"
 #include <cmath>
 #include <fstream>
-#include <functional>
 #include <iostream>
 #include <random>
 
@@ -86,7 +85,7 @@ void stabilizerCodes::add_error_given_epsilon(double epsilon) {
     auto res = std::random_device()();
     std::ranlux24 generator(res);
     std::uniform_real_distribution<double> distribution(0, 1);
-    auto roll = std::bind(distribution, generator);
+    auto roll = [&distribution, &generator]() { return distribution(generator); };
 
     for (unsigned i = 0; i < N; i++) {
         double rndValue = roll();
