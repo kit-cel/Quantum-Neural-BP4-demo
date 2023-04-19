@@ -5,7 +5,7 @@ This jupyter notebook provides the implementation which produces the results in 
 * The neural BP (NBP) decoder
 * The function for training, can be run on CPU or GPU
 * Call on the C++ functions which evaluate the trained decoder
-* Additionally, the overcomplete check matrices used in [1] are provided in the ./PCM folder
+* Additionally, the overcomplete check matrices used in [1] are provided in the ./PCMs folder
 
 [1] S. Miao, A. Schnerring, H. Li and L. Schmalen, "Neural belief propagation decoding of quantum LDPC codes using overcomplete check matrices," Proc. IEEE Inform. Theory Workshop (ITW), Saint-Malo, France, Apr. 2023, https://arxiv.org/abs/2212.10245
 
