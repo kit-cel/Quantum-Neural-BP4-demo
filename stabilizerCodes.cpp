@@ -116,9 +116,10 @@ void stabilizerCodes::read_H() {
         codeTypeString = "toric";
     else
         throw std::invalid_argument("unimplemented codetype");
-    std::string filename;
-    filename = "./PCMs/" + codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) + "/" + codeTypeString +
-               "_" + std::to_string(N) + "_" + std::to_string(K) + "_H_" + std::to_string(M) + ".alist";
+
+    std::string filename = "./PCMs/" + codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) + "/" +
+                           codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) + "_H_" +
+                           std::to_string(M) + ".alist";
     // Nvk same shape and Nv, but its value k means the i-th VN being the k-th neigbor of j-th CN
     // Mck same shape and Nv, but its value k means the i-th CN being the k-th neigbor of j-th VN
     std::vector<std::vector<unsigned>> checkValues;
@@ -227,6 +228,7 @@ void stabilizerCodes::read_G() {
         codeTypeString = "toric";
     else
         throw std::invalid_argument("unimplemented codetype");
+
     std::string filename = "./PCMs/" + codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) + "/" +
                            codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) + "_G.txt";
     std::string line;
@@ -517,7 +519,7 @@ std::vector<bool> stabilizerCodes::check_success(const double *Taux, const doubl
         for (unsigned j = 0; j < N; j++) {
             check += (trace_inner_product(error[j], G[i][j]) + trace_inner_product(error_hat[j], G[i][j]));
         }
-        if ((check % 2) != 0) {
+        if (check % 2) {
             return success;
         }
     }
@@ -535,9 +537,9 @@ void stabilizerCodes::load_cn_weights() {
         codeTypeString = "toric";
     else
         throw std::invalid_argument("unimplemented codetype");
-    std::string filename;
-    filename = "./training_results/" + codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) + "_" +
-               std::to_string(M) + "/weight_cn.txt";
+
+    std::string filename = "./training_results/" + codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) +
+                           "_" + std::to_string(M) + "/weight_cn.txt";
     std::vector<std::vector<std::vector<double>>> weight_cn;
     std::string line;
     std::ifstream myfile;
@@ -594,9 +596,9 @@ void stabilizerCodes::load_llr_weights() {
         codeTypeString = "toric";
     else
         throw std::invalid_argument("unimplemented codetype");
-    std::string filename;
-    filename = "./training_results/" + codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) + "_" +
-               std::to_string(M) + "/weight_llr.txt";
+
+    std::string filename = "./training_results/" + codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) +
+                           "_" + std::to_string(M) + "/weight_llr.txt";
     std::vector<std::vector<double>> weight_llr;
 
     std::string line;
@@ -636,9 +638,9 @@ void stabilizerCodes::load_vn_weights() {
         codeTypeString = "toric";
     else
         throw std::invalid_argument("unimplemented codetype");
-    std::string filename;
-    filename = "./training_results/" + codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) + "_" +
-               std::to_string(M) + "/weight_vn.txt";
+
+    std::string filename = "./training_results/" + codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) +
+                           "_" + std::to_string(M) + "/weight_vn.txt";
     std::vector<std::vector<std::vector<double>>> weight_cn;
     std::string line;
     std::ifstream myfile;
