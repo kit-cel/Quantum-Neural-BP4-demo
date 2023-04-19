@@ -2,6 +2,12 @@
 // Created by sisi on 1/13/23.
 //
 #include "stabilizerCodes.h"
+#include <cmath>
+#include <fstream>
+#include <functional>
+#include <iostream>
+#include <random>
+
 stabilizerCodes::stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, bool trained) {
     mycodetype = codeType;
     N = n;
@@ -23,7 +29,7 @@ std::vector<bool> stabilizerCodes::decode(unsigned int L, double epsilon) {
     }
     calculate_syndrome();
     error_hat = std::vector<unsigned>(N, 0);
-    return flooding_decode(L, epsilon, error);
+    return flooding_decode(L, epsilon);
 }
 
 bool stabilizerCodes::check_symplectic() {
@@ -34,32 +40,36 @@ bool stabilizerCodes::check_symplectic() {
     unsigned *vec2;
     vec2 = (unsigned *)malloc(N * sizeof(unsigned *));
 
-    for (int rowid = 0; rowid < M; rowid++) {
-        for (int iii = 0; iii < N; iii++)
+    for (unsigned rowid = 0; rowid < M; rowid++) {
+        for (unsigned iii = 0; iii < N; iii++)
             vec1[iii] = 0;
-        for (int j = 0; j < dc[rowid]; j++) {
+        for (unsigned j = 0; j < dc[rowid]; j++) {
             vec1[Mc[rowid][j]] = checkVal[rowid][j];
         }
         // check HH^T=0
-        for (int i = 0; i < M; i++) {
-            for (int iii = 0; iii < N; iii++)
+        for (unsigned i = 0; i < M; i++) {
+            for (unsigned iii = 0; iii < N; iii++)
                 vec2[iii] = 0;
-            for (int j = 0; j < dc[i]; j++) {
+            for (unsigned j = 0; j < dc[i]; j++) {
                 vec2[Mc[i][j]] = checkVal[i][j];
             }
             unsigned syn_check = 0;
-            for (int j = 0; j < N; j++) {
+            for (unsigned j = 0; j < N; j++) {
                 syn_check += trace_inner_product(vec1[j], vec2[j]);
             }
-            assert((syn_check % 2) == 0);
+            if (syn_check % 2) {
+                throw std::runtime_error("check_symplectic: syn_check % 2 != 0");
+            }
         }
         // check GH^T=0
-        for (int i = 0; i < G_rows; i++) {
+        for (unsigned i = 0; i < G_rows; i++) {
             unsigned syn_check = 0;
-            for (int j = 0; j < N; j++) {
+            for (unsigned j = 0; j < N; j++) {
                 syn_check += trace_inner_product(vec1[j], G[i][j]);
             }
-            assert((syn_check % 2) == 0);
+            if (syn_check % 2) {
+                throw std::runtime_error("check_symplectic / GH^T: syn_check % 2 != 0");
+            }
         }
     }
     free(vec1);
@@ -95,7 +105,7 @@ void stabilizerCodes::add_error_given_epsilon(double epsilon) {
     }
 }
 
-void stabilizerCodes::add_error_given_positions(int *pos, int *error, int size) {}
+// void stabilizerCodes::add_error_given_positions(int *pos, int *error, int size) {}
 
 void stabilizerCodes::read_H() {
     std::string codeTypeString;
@@ -121,48 +131,52 @@ void stabilizerCodes::read_H() {
     if (myfile.is_open()) {
         // first line, n k
         getline(myfile, line, ' ');
-        unsigned n = std::stoi(line);
+        unsigned n = std::stoul(line);
         getline(myfile, line);
-        unsigned m = std::stoi(line);
+        unsigned m = std::stoul(line);
 
-        assert(n == N);
-        assert(M = m);
+        if (n != N) {
+            throw std::runtime_error("read_H: file-specified N not as expected");
+        }
+        if (m != M) {
+            throw std::runtime_error("read_H: file-specified M not as expected");
+        }
         // second line max dv and dc
         getline(myfile, line, ' ');
-        maxDv = std::stoi(line);
+        maxDv = std::stoul(line);
         getline(myfile, line);
-        maxDc = std::stoi(line);
+        maxDc = std::stoul(line);
 
         // third line, dv degrees
-        for (int i = 0; i < n - 1; i++) {
+        for (unsigned i = 0; i < n - 1; i++) {
             getline(myfile, line, ' ');
-            dv.push_back(std::stoi(line));
+            dv.push_back(std::stoul(line));
             Nvk.emplace_back();
         }
         Nvk.emplace_back();
         getline(myfile, line);
-        dv.push_back(std::stoi(line));
+        dv.push_back(std::stoul(line));
 
         // forth line, dc degrees
-        for (int i = 0; i < m - 1; i++) {
+        for (unsigned i = 0; i < m - 1; i++) {
             getline(myfile, line, ' ');
-            dc.push_back(std::stoi(line));
+            dc.push_back(std::stoul(line));
             Mck.emplace_back();
         }
         Mck.emplace_back();
         getline(myfile, line);
-        dc.push_back(std::stoi(line));
+        dc.push_back(std::stoul(line));
 
         // fifth to n+5-th line, dv neighbors
         for (unsigned i = 0; i < n; i++) {
             Nv.emplace_back(dv[i], 0);
             for (unsigned j = 0; j < dv[i] - 1; j++) {
                 getline(myfile, line, ' ');
-                Nv[i][j] = std::stoi(line) - 1;
+                Nv[i][j] = std::stoul(line) - 1;
                 Mck[Nv[i][j]].push_back(j);
             }
             getline(myfile, line);
-            Nv[i][dv[i] - 1] = std::stoi(line) - 1;
+            Nv[i][dv[i] - 1] = std::stoul(line) - 1;
             Mck[Nv[i][dv[i] - 1]].push_back(dv[i] - 1);
         }
 
@@ -171,11 +185,11 @@ void stabilizerCodes::read_H() {
             Mc.emplace_back(dc[i], 0);
             for (unsigned j = 0; j < dc[i] - 1; j++) {
                 getline(myfile, line, ' ');
-                Mc[i][j] = std::stoi(line) - 1;
+                Mc[i][j] = std::stoul(line) - 1;
                 Nvk[Mc[i][j]].push_back(j);
             }
             getline(myfile, line);
-            Mc[i][dc[i] - 1] = std::stoi(line) - 1;
+            Mc[i][dc[i] - 1] = std::stoul(line) - 1;
             Nvk[Mc[i][dc[i] - 1]].push_back(dc[i] - 1);
         }
         // n+6+m+1-th to n+6+m+n-th line, value of each row
@@ -183,20 +197,20 @@ void stabilizerCodes::read_H() {
             checkValues.emplace_back(dc[i], 0);
             for (unsigned j = 0; j < dc[i] - 1; j++) {
                 getline(myfile, line, ' ');
-                checkValues[i][j] = std::stoi(line);
+                checkValues[i][j] = std::stoul(line);
             }
             getline(myfile, line);
-            checkValues[i][dc[i] - 1] = std::stoi(line);
+            checkValues[i][dc[i] - 1] = std::stoul(line);
         }
         // last lines, value of each column
         for (unsigned i = 0; i < n; i++) {
             VariableValues.emplace_back(dv[i], 0);
             for (unsigned j = 0; j < dv[i] - 1; j++) {
                 getline(myfile, line, ' ');
-                VariableValues[i][j] = std::stoi(line);
+                VariableValues[i][j] = std::stoul(line);
             }
             getline(myfile, line);
-            VariableValues[i][dv[i] - 1] = std::stoi(line);
+            VariableValues[i][dv[i] - 1] = std::stoul(line);
         }
         myfile.close();
     } else
@@ -224,10 +238,10 @@ void stabilizerCodes::read_G() {
             std::vector<unsigned> row(N, 0);
             for (unsigned j = 0; j < N - 1; j++) {
                 getline(myfile, line, ' ');
-                row[j] = std::stoi(line);
+                row[j] = std::stoul(line);
             }
             getline(myfile, line);
-            row[N - 1] = std::stoi(line);
+            row[N - 1] = std::stoul(line);
             G.push_back(row);
         }
         myfile.close();
@@ -238,7 +252,9 @@ double stabilizerCodes::quantize_belief(double Tau, double Tau1, double Tau2) {
     double nom = log1p(exp(-1.0 * Tau));
     double denom = std::max(-1.0 * Tau1, -1.0 * Tau2) + log1p(exp(-1.0 * fabs((Tau1 - Tau2))));
     double ret_val = nom - denom;
-    assert(!std::isnan(ret_val));
+    if (std::isnan(ret_val)) {
+        throw std::runtime_error("quantize_belief: Log difference is NaN");
+    }
     return ret_val;
 }
 
@@ -251,11 +267,13 @@ unsigned stabilizerCodes::trace_inner_product(unsigned int a, unsigned int b) {
 }
 
 // TODO: reimplement flooding decode
-std::vector<bool> stabilizerCodes::flooding_decode(unsigned int L, double epsilon, const std::vector<unsigned> error) {
-    double num_elements_in_H = 0;
-    for (int i = 0; i < N; i++) {
-        num_elements_in_H += dv[i];
-    }
+std::vector<bool> stabilizerCodes::flooding_decode(unsigned int L, double epsilon) {
+    // Variable num_elements_in_H never used
+    //
+    // double num_elements_in_H = 0;
+    // for (unsigned i = 0; i < N; i++) {
+    //     num_elements_in_H += dv[i];
+    // }
     std::vector<bool> success(2, false);
     double L0 = log(3.0 * (1 - epsilon) / epsilon);
 
@@ -271,24 +289,24 @@ std::vector<bool> stabilizerCodes::flooding_decode(unsigned int L, double epsilo
     Tauy = (double *)malloc(N * sizeof(double *));
     double *phi_msg;
     phi_msg = (double *)malloc(maxDc * sizeof(double *));
-    for (int i = 0; i < M; i++) {
+    for (unsigned i = 0; i < M; i++) {
         mc2v[i] = (double *)malloc(dc[i] * sizeof(double *));
-        for (int j = 0; j < dc[i]; j++)
+        for (unsigned j = 0; j < dc[i]; j++)
             mc2v[i][j] = 0;
     }
     if (mTrained) {
-        for (int i = 0; i < N; i++) {
+        for (unsigned i = 0; i < N; i++) {
             mv2c[i] = (double *)malloc(dv[i] * sizeof(double *));
-            for (int j = 0; j < dv[i]; j++) {
+            for (unsigned j = 0; j < dv[i]; j++) {
                 double lam = log((1 + exp(-L0 * weights_llr[0][i])) /
                                  (exp(-L0 * weights_llr[0][i]) + exp(-L0 * weights_llr[0][i])));
                 mv2c[i][j] = lam *= weights_vn[0][i][j];
             }
         }
     } else {
-        for (int i = 0; i < N; i++) {
+        for (unsigned i = 0; i < N; i++) {
             mv2c[i] = (double *)malloc(dv[i] * sizeof(double *));
-            for (int j = 0; j < dv[i]; j++) {
+            for (unsigned j = 0; j < dv[i]; j++) {
                 mv2c[i][j] = lambda0;
             }
         }
@@ -306,12 +324,13 @@ std::vector<bool> stabilizerCodes::flooding_decode(unsigned int L, double epsilo
     // start decoding
     for (unsigned decIter = 0; decIter < L; decIter++) {
         // CN update, for i-th check node, calculate mc2v
-        double sum_cn_msg = 0;
-        for (int i = 0; i < M; i++) {
+        // Variable sum_cn_msg never used
+        // double sum_cn_msg = 0;
+        for (unsigned i = 0; i < M; i++) {
             double phi_sum = 0;
             double sign_prod = (syn[i] == 0 ? 1.0 : -1.0);
             // Sum-Product
-            for (int j = 0; j < dc[i]; j++) {
+            for (unsigned j = 0; j < dc[i]; j++) {
                 if (mv2c[Mc[i][j]][Mck[i][j]] != 0)
                     phi_msg[j] = -1.0 * log(tanh(fabs(mv2c[Mc[i][j]][Mck[i][j]]) / 2.0));
                 else
@@ -320,7 +339,7 @@ std::vector<bool> stabilizerCodes::flooding_decode(unsigned int L, double epsilo
                 sign_prod *= (mv2c[Mc[i][j]][Mck[i][j]] >= 0.0 ? 1.0 : -1.0);
             }
 
-            for (int j = 0; j < dc[i]; j++) {
+            for (unsigned j = 0; j < dc[i]; j++) {
                 double phi_extrinsic_phi_sum = phi_sum - phi_msg[j];
                 double phi_phi_sum = 60;
                 if (phi_extrinsic_phi_sum != 0)
@@ -328,12 +347,18 @@ std::vector<bool> stabilizerCodes::flooding_decode(unsigned int L, double epsilo
                 mc2v[i][j] = phi_phi_sum * sign_prod / (mv2c[Mc[i][j]][Mck[i][j]] >= 0.0 ? 1.0 : -1.0);
                 if (mTrained && decIter < trained_iter)
                     mc2v[i][j] *= weights_cn[decIter][i][j];
-                sum_cn_msg += fabs(mc2v[i][j]);
-                assert(!std::isnan(mc2v[i][j]));
-                assert(!std::isinf(mc2v[i][j]));
+                // sum_cn_msg += fabs(mc2v[i][j]);
+                if (std::isnan(mc2v[i][j])) {
+                    throw std::runtime_error("flooding_decode: mc2v[i][j] is NaN");
+                }
+                if (std::isinf(mc2v[i][j])) {
+                    throw std::runtime_error("flooding_decode: mc2v[i][j] is infinity");
+                }
             }
         }
-        double ave_cn_msg = sum_cn_msg / num_elements_in_H;
+
+        // unused:
+        // double ave_cn_msg = sum_cn_msg / num_elements_in_H;
         if (print_msg) {
             std::cout << "CN messages" << std::endl;
             for (unsigned r = 0; r < 1; r++) {
@@ -359,7 +384,7 @@ std::vector<bool> stabilizerCodes::flooding_decode(unsigned int L, double epsilo
             double Tauzi;
 
             // jj, index of the neighboring CNs of the VN, sum up the CN messages
-            for (int jj = 0; jj < dv[Vidx]; jj++) {
+            for (unsigned jj = 0; jj < dv[Vidx]; jj++) {
                 if (varVal[Vidx][jj] == 1) {
                     Tauz[Vidx] += mc2v[Nv[Vidx][jj]][Nvk[Vidx][jj]];
                     Tauy[Vidx] += mc2v[Nv[Vidx][jj]][Nvk[Vidx][jj]];
@@ -373,7 +398,7 @@ std::vector<bool> stabilizerCodes::flooding_decode(unsigned int L, double epsilo
                     throw std::invalid_argument("something is wrong");
             }
 
-            for (int jj = 0; jj < dv[Vidx]; jj++) {
+            for (unsigned jj = 0; jj < dv[Vidx]; jj++) {
                 double temp;
                 if (varVal[Vidx][jj] == 1) {
                     Tauxi = Taux[Vidx];
@@ -399,8 +424,13 @@ std::vector<bool> stabilizerCodes::flooding_decode(unsigned int L, double epsilo
                     mv2c[Vidx][jj] = -limit;
                 else
                     mv2c[Vidx][jj] = temp;
-                assert(!std::isnan(mv2c[Vidx][jj]));
-                assert(!std::isinf(mv2c[Vidx][jj]));
+
+                if (std::isnan(mv2c[Vidx][jj])) {
+                    throw std::runtime_error("flooding_decode: mv2c[Vidx][jj] is NaN");
+                }
+                if (std::isinf(mv2c[Vidx][jj])) {
+                    throw std::runtime_error("flooding_decode: mv2c[Vidx][jj] is infinity");
+                }
                 if (mTrained && decIter < trained_iter)
                     mv2c[Vidx][jj] *= weights_vn[decIter + 1][Vidx][jj];
             }
@@ -434,10 +464,10 @@ std::vector<bool> stabilizerCodes::flooding_decode(unsigned int L, double epsilo
     free(Tauy);
     free(Tauz);
     free(phi_msg);
-    for (int i = 0; i < M; i++) {
+    for (unsigned i = 0; i < M; i++) {
         free(mc2v[i]);
     }
-    for (int i = 0; i < N; i++) {
+    for (unsigned i = 0; i < N; i++) {
         free(mv2c[i]);
     }
     free(mc2v);
@@ -446,9 +476,9 @@ std::vector<bool> stabilizerCodes::flooding_decode(unsigned int L, double epsilo
 }
 
 void stabilizerCodes::calculate_syndrome() {
-    for (int i = 0; i < M; i++) {
+    for (unsigned i = 0; i < M; i++) {
         unsigned check = 0;
-        for (int j = 0; j < dc[i]; j++) {
+        for (unsigned j = 0; j < dc[i]; j++) {
             check += trace_inner_product(error[Mc[i][j]], checkVal[i][j]);
         }
         syn.push_back(check % 2);
@@ -459,7 +489,7 @@ std::vector<bool> stabilizerCodes::check_success(const double *Taux, const doubl
     std::vector<bool> success(2, false);
     error_hat = std::vector<unsigned>(N, 0);
     errorHatString.clear();
-    for (int i = 0; i < N; i++) {
+    for (unsigned i = 0; i < N; i++) {
         if (Taux[i] > 0 && Tauy[i] > 0 && Tauz[i] > 0) {
             error_hat[i] = 0;
         } else if (Taux[i] < Tauy[i] && Taux[i] < Tauz[i]) {
@@ -473,9 +503,9 @@ std::vector<bool> stabilizerCodes::check_success(const double *Taux, const doubl
             errorHatString.emplace_back("Y" + std::to_string(i));
         }
     }
-    for (int i = 0; i < M; i++) {
+    for (unsigned i = 0; i < M; i++) {
         unsigned check = 0;
-        for (int j = 0; j < dc[i]; j++) {
+        for (unsigned j = 0; j < dc[i]; j++) {
             check += trace_inner_product(error_hat[Mc[i][j]], checkVal[i][j]);
         }
         if ((check % 2) != syn[i]) {
@@ -483,9 +513,9 @@ std::vector<bool> stabilizerCodes::check_success(const double *Taux, const doubl
         }
     }
     success[0] = true;
-    for (int i = 0; i < G_rows; i++) {
+    for (unsigned i = 0; i < G_rows; i++) {
         unsigned check = 0;
-        for (int j = 0; j < N; j++) {
+        for (unsigned j = 0; j < N; j++) {
             check += (trace_inner_product(error[j], G[i][j]) + trace_inner_product(error_hat[j], G[i][j]));
         }
         if ((check % 2) != 0) {
@@ -517,16 +547,20 @@ void stabilizerCodes::load_cn_weights() {
     if (myfile.is_open()) {
         // first line, number of iterations
         getline(myfile, line);
-        dec_iter = std::stoi(line);
+        dec_iter = std::stoul(line);
         trained_iter = dec_iter;
         // second line, n m
         getline(myfile, line, ' ');
-        unsigned n = std::stod(line);
+        unsigned n = std::stoul(line);
         getline(myfile, line);
-        unsigned m = std::stoi(line);
+        unsigned m = std::stoul(line);
 
-        assert(n == N);
-        assert(M = m);
+        if (n != N) {
+            throw std::runtime_error("load_cn_weights: file-specified N not as expected");
+        }
+        if (m != M) {
+            throw std::runtime_error("load_cn_weights: file-specified M not as expected");
+        }
         // rest of the lines, value of each rows of all iterations
         for (unsigned iter = 0; iter < dec_iter; iter++) {
             weight_cn.emplace_back();
@@ -573,7 +607,7 @@ void stabilizerCodes::load_llr_weights() {
     if (myfile.is_open()) {
         // first line, number of iterations
         getline(myfile, line);
-        dec_iter = std::stoi(line);
+        dec_iter = std::stoul(line);
 
         // rest of the lines, value of all llr weights
         for (unsigned iter = 0; iter < dec_iter; iter++) {
@@ -614,15 +648,19 @@ void stabilizerCodes::load_vn_weights() {
     if (myfile.is_open()) {
         // first line, number of iterations
         getline(myfile, line);
-        dec_iter = std::stoi(line);
+        dec_iter = std::stoul(line);
         // second line, n m
         getline(myfile, line, ' ');
-        unsigned n = std::stod(line);
+        unsigned n = std::stoul(line);
         getline(myfile, line);
-        unsigned m = std::stoi(line);
+        unsigned m = std::stoul(line);
 
-        assert(n == N);
-        assert(M = m);
+        if (n != N) {
+            throw std::runtime_error("load_vn_weights: file-specified N not as expected");
+        }
+        if (m != M) {
+            throw std::runtime_error("load_vb_weights: file-specified M not as expected");
+        }
         // rest of the lines, value of each rows of all iterations
         for (unsigned iter = 0; iter < dec_iter; iter++) {
             weight_cn.emplace_back();

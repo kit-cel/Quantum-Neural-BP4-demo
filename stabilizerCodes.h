@@ -3,12 +3,6 @@
 //
 #ifndef BPDECODING_STABILIZIERCODES_H
 #define BPDECODING_STABILIZIERCODES_H
-#include <assert.h>
-#include <cmath>
-#include <fstream>
-#include <functional>
-#include <iostream>
-#include <random>
 #include <string>
 #include <vector>
 enum class stabilizerCodesType { GeneralizedBicycle = 0, HypergraphProduct = 1, toric = 3 };
@@ -19,7 +13,7 @@ class stabilizerCodes {
 
     std::vector<bool> decode(unsigned int L, double epsilon);
 
-    std::vector<bool> flooding_decode(unsigned int L, double epsilon, const std::vector<unsigned> error);
+    std::vector<bool> flooding_decode(unsigned int L, double epsilon);
 
     std::vector<bool> check_success(const double *Taux, const double *Tauy, const double *Tauz);
     void load_cn_weights();
@@ -32,12 +26,13 @@ class stabilizerCodes {
 
     void add_error_given_epsilon(double epsilon);
 
-    void add_error_given_positions(int pos[], int error[], int size);
+    // void add_error_given_positions(int pos[], int error[], int size);
 
     void calculate_syndrome(); // also check if the error is all 0, if true, not decoding needed
 
     double quantize_belief(double Taux, double Tauy, double Tauz);
 
+  private:
     bool print_msg = false;
 
     stabilizerCodesType mycodetype;
