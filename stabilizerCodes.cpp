@@ -1,6 +1,13 @@
-//
-// Created by sisi on 1/13/23.
-//
+/*
+ * Copyright 2023 Sisi Miao, Communications Engineering Lab @ KIT
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ * This file accompanies the paper
+ *     S. Miao, A. Schnerring, H. Li and L. Schmalen,
+ *     "Neural belief propagation decoding of quantum LDPC codes using overcomplete check matrices,"
+ *     Proc. IEEE Inform. Theory Workshop (ITW), Saint-Malo, France, Apr. 2023, https://arxiv.org/abs/2212.10245
+ */
 #include "stabilizerCodes.h"
 #include <cmath>
 #include <fstream>
