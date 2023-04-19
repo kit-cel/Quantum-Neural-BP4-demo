@@ -14,4 +14,4 @@ include_directories(.)
 add_executable(NBP_jupyter
         simulateFER.cpp
         stabilizerCodes.cpp
-        stabilizierCodes.h)
+        stabilizerCodes.h)
