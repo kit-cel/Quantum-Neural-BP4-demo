@@ -1,5 +1,4 @@
 #include "stabilizerCodes.h"
-#include <iomanip>
 #include <iostream>
 #include <omp.h>
 int main() {
