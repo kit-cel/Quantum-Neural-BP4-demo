@@ -29,6 +29,7 @@ class stabilizerCodes {
     void read_H();
     void read_G();
     static inline bool trace_inner_product(unsigned a, unsigned b);
+    std::string code_type_string() const;
     bool check_symplectic();
 
     void add_error_given_epsilon(double epsilon);

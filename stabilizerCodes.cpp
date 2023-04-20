@@ -114,16 +114,7 @@ void stabilizerCodes::add_error_given_epsilon(double epsilon) {
 // void stabilizerCodes::add_error_given_positions(int *pos, int *error, int size) {}
 
 void stabilizerCodes::read_H() {
-    std::string codeTypeString;
-    if (mycodetype == stabilizerCodesType::GeneralizedBicycle)
-        codeTypeString = "GB";
-    else if (mycodetype == stabilizerCodesType::HypergraphProduct)
-        codeTypeString = "HP";
-    else if (mycodetype == stabilizerCodesType::toric)
-        codeTypeString = "toric";
-    else
-        throw std::invalid_argument("unimplemented codetype");
-
+    std::string codeTypeString = code_type_string();
     std::string filename = "./PCMs/" + codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) + "/" +
                            codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) + "_H_" +
                            std::to_string(M) + ".alist";
@@ -226,16 +217,7 @@ void stabilizerCodes::read_H() {
     varVal = VariableValues;
 }
 void stabilizerCodes::read_G() {
-    std::string codeTypeString;
-    if (mycodetype == stabilizerCodesType::GeneralizedBicycle)
-        codeTypeString = "GB";
-    else if (mycodetype == stabilizerCodesType::HypergraphProduct)
-        codeTypeString = "HP";
-    else if (mycodetype == stabilizerCodesType::toric)
-        codeTypeString = "toric";
-    else
-        throw std::invalid_argument("unimplemented codetype");
-
+    std::string codeTypeString = code_type_string();
     std::string filename = "./PCMs/" + codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) + "/" +
                            codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) + "_G.txt";
     std::string line;
@@ -528,17 +510,20 @@ std::vector<bool> stabilizerCodes::check_success(const double *Taux, const doubl
     return success;
 }
 
-void stabilizerCodes::load_cn_weights() {
-    std::string codeTypeString;
-    if (mycodetype == stabilizerCodesType::GeneralizedBicycle)
-        codeTypeString = "GB";
-    else if (mycodetype == stabilizerCodesType::HypergraphProduct)
-        codeTypeString = "HP";
-    else if (mycodetype == stabilizerCodesType::toric)
-        codeTypeString = "toric";
-    else
-        throw std::invalid_argument("unimplemented codetype");
+std::string stabilizerCodes::code_type_string() const {
+    switch (mycodetype) {
+    case stabilizerCodesType::GeneralizedBicycle:
+        return "GB";
+    case stabilizerCodesType::HypergraphProduct:
+        return "HP";
+    case stabilizerCodesType::toric:
+        return "toric";
+    }
+    throw std::invalid_argument("unimplemented codetype");
+}
 
+void stabilizerCodes::load_cn_weights() {
+    std::string codeTypeString = code_type_string();
     std::string filename = "./training_results/" + codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) +
                            "_" + std::to_string(M) + "/weight_cn.txt";
     std::vector<std::vector<std::vector<double>>> weight_cn;
@@ -588,16 +573,7 @@ void stabilizerCodes::load_cn_weights() {
 }
 
 void stabilizerCodes::load_llr_weights() {
-    std::string codeTypeString;
-    if (mycodetype == stabilizerCodesType::GeneralizedBicycle)
-        codeTypeString = "GB";
-    else if (mycodetype == stabilizerCodesType::HypergraphProduct)
-        codeTypeString = "HP";
-    else if (mycodetype == stabilizerCodesType::toric)
-        codeTypeString = "toric";
-    else
-        throw std::invalid_argument("unimplemented codetype");
-
+    std::string codeTypeString = code_type_string();
     std::string filename = "./training_results/" + codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) +
                            "_" + std::to_string(M) + "/weight_llr.txt";
     std::vector<std::vector<double>> weight_llr;
@@ -630,16 +606,7 @@ void stabilizerCodes::load_llr_weights() {
 }
 
 void stabilizerCodes::load_vn_weights() {
-    std::string codeTypeString;
-    if (mycodetype == stabilizerCodesType::GeneralizedBicycle)
-        codeTypeString = "GB";
-    else if (mycodetype == stabilizerCodesType::HypergraphProduct)
-        codeTypeString = "HP";
-    else if (mycodetype == stabilizerCodesType::toric)
-        codeTypeString = "toric";
-    else
-        throw std::invalid_argument("unimplemented codetype");
-
+    std::string codeTypeString = code_type_string();
     std::string filename = "./training_results/" + codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) +
                            "_" + std::to_string(M) + "/weight_vn.txt";
     std::vector<std::vector<std::vector<double>>> weight_cn;
