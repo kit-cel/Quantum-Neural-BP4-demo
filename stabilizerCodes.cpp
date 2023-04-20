@@ -496,19 +496,15 @@ void stabilizerCodes::calculate_syndrome() {
 std::vector<bool> stabilizerCodes::check_success(const double *Taux, const double *Tauy, const double *Tauz) {
     std::vector<bool> success(2, false);
     error_hat = std::vector<unsigned>(N, 0);
-    errorHatString.clear();
     for (unsigned i = 0; i < N; i++) {
         if (Taux[i] > 0 && Tauy[i] > 0 && Tauz[i] > 0) {
             error_hat[i] = 0;
         } else if (Taux[i] < Tauy[i] && Taux[i] < Tauz[i]) {
             error_hat[i] = 1;
-            errorHatString.emplace_back("X" + std::to_string(i));
         } else if (Tauz[i] < Taux[i] && Tauz[i] < Tauy[i]) {
             error_hat[i] = 2;
-            errorHatString.emplace_back("Z" + std::to_string(i));
         } else {
             error_hat[i] = 3;
-            errorHatString.emplace_back("Y" + std::to_string(i));
         }
     }
     for (unsigned i = 0; i < M; i++) {
