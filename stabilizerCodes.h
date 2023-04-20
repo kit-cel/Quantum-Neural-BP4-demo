@@ -28,7 +28,7 @@ class stabilizerCodes {
     void load_llr_weights();
     void read_H();
     void read_G();
-    static inline unsigned trace_inner_product(unsigned a, unsigned b);
+    static inline bool trace_inner_product(unsigned a, unsigned b);
     bool check_symplectic();
 
     void add_error_given_epsilon(double epsilon);

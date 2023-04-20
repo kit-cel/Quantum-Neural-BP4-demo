@@ -59,21 +59,21 @@ bool stabilizerCodes::check_symplectic() {
             for (unsigned j = 0; j < dc[i]; j++) {
                 vec2[Mc[i][j]] = checkVal[i][j];
             }
-            unsigned syn_check = 0;
+            bool syn_check = false;
             for (unsigned j = 0; j < N; j++) {
-                syn_check += trace_inner_product(vec1[j], vec2[j]);
+                syn_check = trace_inner_product(vec1[j], vec2[j]) ? !syn_check : syn_check;
             }
-            if (syn_check % 2) {
+            if (syn_check) {
                 throw std::runtime_error("check_symplectic: syn_check % 2 != 0");
             }
         }
         // check GH^T=0
         for (unsigned i = 0; i < G_rows; i++) {
-            unsigned syn_check = 0;
+            bool syn_check = false;
             for (unsigned j = 0; j < N; j++) {
-                syn_check += trace_inner_product(vec1[j], G[i][j]);
+                syn_check = trace_inner_product(vec1[j], G[i][j]) ? !syn_check : syn_check;
             }
-            if (syn_check % 2) {
+            if (syn_check) {
                 throw std::runtime_error("check_symplectic / GH^T: syn_check % 2 != 0");
             }
         }
@@ -266,10 +266,8 @@ double stabilizerCodes::quantize_belief(double Tau, double Tau1, double Tau2) {
     return ret_val;
 }
 
-inline unsigned stabilizerCodes::trace_inner_product(unsigned int a, unsigned int b) {
-    if (a == 0 || b == 0 || a == b)
-        return 0;
-    return 1;
+inline bool stabilizerCodes::trace_inner_product(unsigned int a, unsigned int b) {
+    return !(a == 0 || b == 0 || a == b);
 }
 
 // TODO: reimplement flooding decode
@@ -483,9 +481,9 @@ std::vector<bool> stabilizerCodes::flooding_decode(unsigned int L, double epsilo
 
 void stabilizerCodes::calculate_syndrome() {
     for (unsigned i = 0; i < M; i++) {
-        unsigned check = 0;
+        bool check = false;
         for (unsigned j = 0; j < dc[i]; j++) {
-            check += trace_inner_product(error[Mc[i][j]], checkVal[i][j]);
+            check = trace_inner_product(error[Mc[i][j]], checkVal[i][j]) ? !check : check;
         }
         syn.push_back(check % 2);
     }
@@ -506,21 +504,23 @@ std::vector<bool> stabilizerCodes::check_success(const double *Taux, const doubl
         }
     }
     for (unsigned i = 0; i < M; i++) {
-        unsigned check = 0;
+        // unsigned check = 0;
+        bool check = false;
         for (unsigned j = 0; j < dc[i]; j++) {
-            check += trace_inner_product(error_hat[Mc[i][j]], checkVal[i][j]);
+            check = trace_inner_product(error_hat[Mc[i][j]], checkVal[i][j]) ? !check : check;
         }
-        if ((check % 2) != syn[i]) {
+        if ((check) != syn[i]) {
             return success;
         }
     }
     success[0] = true;
     for (unsigned i = 0; i < G_rows; i++) {
-        unsigned check = 0;
+        bool check = false;
         for (unsigned j = 0; j < N; j++) {
-            check += (trace_inner_product(error[j], G[i][j]) + trace_inner_product(error_hat[j], G[i][j]));
+            check = trace_inner_product(error[j], G[i][j]) ? !check : check;
+            check = trace_inner_product(error_hat[j], G[i][j]) ? !check : check;
         }
-        if (check % 2) {
+        if (check) {
             return success;
         }
     }
