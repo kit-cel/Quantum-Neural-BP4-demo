@@ -28,7 +28,7 @@ class stabilizerCodes {
     void load_llr_weights();
     void read_H();
     void read_G();
-    inline unsigned trace_inner_product(unsigned a, unsigned b);
+    static inline unsigned trace_inner_product(unsigned a, unsigned b);
     bool check_symplectic();
 
     void add_error_given_epsilon(double epsilon);
@@ -37,7 +37,7 @@ class stabilizerCodes {
 
     void calculate_syndrome(); // also check if the error is all 0, if true, not decoding needed
 
-    double quantize_belief(double Taux, double Tauy, double Tauz);
+    static double quantize_belief(double Taux, double Tauy, double Tauz);
 
   private:
     bool print_msg = false;
