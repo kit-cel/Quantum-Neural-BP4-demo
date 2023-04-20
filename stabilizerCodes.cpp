@@ -266,10 +266,8 @@ double stabilizerCodes::quantize_belief(double Tau, double Tau1, double Tau2) {
     return ret_val;
 }
 
-unsigned stabilizerCodes::trace_inner_product(unsigned int a, unsigned int b) {
-    if (a == 0 || b == 0)
-        return 0;
-    if (a == b)
+inline unsigned stabilizerCodes::trace_inner_product(unsigned int a, unsigned int b) {
+    if (a == 0 || b == 0 || a == b)
         return 0;
     return 1;
 }
