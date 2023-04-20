@@ -53,7 +53,6 @@ class stabilizerCodes {
     std::vector<unsigned> error_hat;
     std::vector<unsigned> syn;
     std::vector<std::string> errorString;
-    std::vector<std::string> errorHatString;
     unsigned maxDc;
     unsigned maxDv;
     std::vector<unsigned> dv;
