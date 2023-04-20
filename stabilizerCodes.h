@@ -1,52 +1,46 @@
-//
-// Created by sisi on 1/13/23.
-//
+/*
+ * Copyright 2023 Sisi Miao, Communications Engineering Lab @ KIT
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ * This file accompanies the paper
+ *     S. Miao, A. Schnerring, H. Li and L. Schmalen,
+ *     "Neural belief propagation decoding of quantum LDPC codes using overcomplete check matrices,"
+ *     Proc. IEEE Inform. Theory Workshop (ITW), Saint-Malo, France, Apr. 2023, https://arxiv.org/abs/2212.10245
+ */
 #ifndef BPDECODING_STABILIZIERCODES_H
 #define BPDECODING_STABILIZIERCODES_H
-#include <vector>
-#include <iostream>
-#include <fstream>
 #include <string>
-#include <cmath>
-#include<random>
-#include <functional>
-#include <assert.h>
-enum class stabilizerCodesType{
-    GeneralizedBicycle = 0,
-    HpergraphProduct = 1,
-    toric = 3
-};
+#include <vector>
+enum class stabilizerCodesType { GeneralizedBicycle = 0, HypergraphProduct = 1, toric = 3 };
 
 class stabilizerCodes {
-public:
-    stabilizerCodes(unsigned n, unsigned k, unsigned m,stabilizerCodesType codeType, bool trained = false);
+  public:
+    stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, bool trained = false);
 
     std::vector<bool> decode(unsigned int L, double epsilon);
 
-    std::vector<bool>
-    floodingDecode(unsigned int L, double epsilon, const std::vector<unsigned> error);
+    std::vector<bool> flooding_decode(unsigned int L, double epsilon);
 
-    std::vector<bool> checkSucess(const double *Taux, const double *Tauy, const double *Tauz);
-    void loadWeights_cn();
-    void loadWeights_vn();
-    void loadWeights_llr();
-    void readH();
-    void readG();
-    inline unsigned traceInnerProduct(unsigned a, unsigned b);
-    bool checksymplectic();
+    std::vector<bool> check_success(const double *Taux, const double *Tauy, const double *Tauz);
+    void load_cn_weights();
+    void load_vn_weights();
+    void load_llr_weights();
+    void read_H();
+    void read_G();
+    inline unsigned trace_inner_product(unsigned a, unsigned b);
+    bool check_symplectic();
 
-    void addErrorGivenEpsilon(double epsilon);
+    void add_error_given_epsilon(double epsilon);
 
-    void addErrorGivenPositions(int pos[], int error[], int size);
+    // void add_error_given_positions(int pos[], int error[], int size);
 
-    void calSyndrome(); //also check if the error is all 0, if true, not decoding needed
+    void calculate_syndrome(); // also check if the error is all 0, if true, not decoding needed
 
-    double bielief_quantize(double Taux, double Tauy, double Tauz);
+    double quantize_belief(double Taux, double Tauy, double Tauz);
 
-
+  private:
     bool print_msg = false;
-
-
 
     stabilizerCodesType mycodetype;
     unsigned N;
@@ -77,6 +71,5 @@ public:
     std::vector<std::vector<std::vector<double>>> weights_cn;
     std::vector<std::vector<std::vector<double>>> weights_vn;
     std::vector<std::vector<double>> weights_llr;
-
 };
-#endif //BPDECODING_STABILIZIERCODES_H
+#endif // BPDECODING_STABILIZIERCODES_H

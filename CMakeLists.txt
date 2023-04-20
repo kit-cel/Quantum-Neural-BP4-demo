@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 project(NBP_jupyter)
 
 set(CMAKE_CXX_STANDARD 14)
-FIND_PACKAGE( OpenMP)
+FIND_PACKAGE(OpenMP)
 if(OPENMP_FOUND)
     message("OPENMP FOUND")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -14,4 +14,10 @@ include_directories(.)
 add_executable(NBP_jupyter
         simulateFER.cpp
         stabilizerCodes.cpp
-        stabilizierCodes.h)
+        stabilizerCodes.h)
+
+if(MSVC)
+    target_compile_options(NBP_jupyter PRIVATE /W4 /WX)
+else()
+    target_compile_options(NBP_jupyter PRIVATE -Wall -Wextra -Wpedantic)
+endif()
