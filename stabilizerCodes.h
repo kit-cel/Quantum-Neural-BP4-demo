@@ -10,8 +10,11 @@
  */
 #ifndef BPDECODING_STABILIZIERCODES_H
 #define BPDECODING_STABILIZIERCODES_H
+#include <filesystem>
 #include <string>
+#include <string_view>
 #include <vector>
+
 enum class stabilizerCodesType { GeneralizedBicycle = 0, HypergraphProduct = 1, toric = 3 };
 
 class stabilizerCodes {
@@ -28,18 +31,20 @@ class stabilizerCodes {
     void load_llr_weights();
     void read_H();
     void read_G();
-    inline unsigned trace_inner_product(unsigned a, unsigned b);
+    static inline bool trace_inner_product(unsigned a, unsigned b);
     bool check_symplectic();
-
     void add_error_given_epsilon(double epsilon);
 
     // void add_error_given_positions(int pos[], int error[], int size);
 
     void calculate_syndrome(); // also check if the error is all 0, if true, not decoding needed
 
-    double quantize_belief(double Taux, double Tauy, double Tauz);
+    static double quantize_belief(double Taux, double Tauy, double Tauz);
 
   private:
+    std::string code_type_string() const;
+    std::filesystem::path construct_weights_path(std::string_view filename) const;
+
     bool print_msg = false;
 
     stabilizerCodesType mycodetype;
@@ -53,7 +58,6 @@ class stabilizerCodes {
     std::vector<unsigned> error_hat;
     std::vector<unsigned> syn;
     std::vector<std::string> errorString;
-    std::vector<std::string> errorHatString;
     unsigned maxDc;
     unsigned maxDv;
     std::vector<unsigned> dv;

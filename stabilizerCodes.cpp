@@ -13,6 +13,7 @@
 #include <fstream>
 #include <iostream>
 #include <random>
+#include <sstream>
 
 stabilizerCodes::stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, bool trained) {
     mycodetype = codeType;
@@ -59,21 +60,21 @@ bool stabilizerCodes::check_symplectic() {
             for (unsigned j = 0; j < dc[i]; j++) {
                 vec2[Mc[i][j]] = checkVal[i][j];
             }
-            unsigned syn_check = 0;
+            bool syn_check = false;
             for (unsigned j = 0; j < N; j++) {
-                syn_check += trace_inner_product(vec1[j], vec2[j]);
+                syn_check = trace_inner_product(vec1[j], vec2[j]) ? !syn_check : syn_check;
             }
-            if (syn_check % 2) {
+            if (syn_check) {
                 throw std::runtime_error("check_symplectic: syn_check % 2 != 0");
             }
         }
         // check GH^T=0
         for (unsigned i = 0; i < G_rows; i++) {
-            unsigned syn_check = 0;
+            bool syn_check = false;
             for (unsigned j = 0; j < N; j++) {
-                syn_check += trace_inner_product(vec1[j], G[i][j]);
+                syn_check = trace_inner_product(vec1[j], G[i][j]) ? !syn_check : syn_check;
             }
-            if (syn_check % 2) {
+            if (syn_check) {
                 throw std::runtime_error("check_symplectic / GH^T: syn_check % 2 != 0");
             }
         }
@@ -114,16 +115,7 @@ void stabilizerCodes::add_error_given_epsilon(double epsilon) {
 // void stabilizerCodes::add_error_given_positions(int *pos, int *error, int size) {}
 
 void stabilizerCodes::read_H() {
-    std::string codeTypeString;
-    if (mycodetype == stabilizerCodesType::GeneralizedBicycle)
-        codeTypeString = "GB";
-    else if (mycodetype == stabilizerCodesType::HypergraphProduct)
-        codeTypeString = "HP";
-    else if (mycodetype == stabilizerCodesType::toric)
-        codeTypeString = "toric";
-    else
-        throw std::invalid_argument("unimplemented codetype");
-
+    std::string codeTypeString = code_type_string();
     std::string filename = "./PCMs/" + codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) + "/" +
                            codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) + "_H_" +
                            std::to_string(M) + ".alist";
@@ -133,13 +125,13 @@ void stabilizerCodes::read_H() {
     std::vector<std::vector<unsigned>> VariableValues;
 
     std::string line;
-    std::ifstream myfile;
-    myfile.open(filename);
-    if (myfile.is_open()) {
+    std::ifstream matrix_file;
+    matrix_file.open(filename);
+    if (matrix_file.is_open()) {
         // first line, n k
-        getline(myfile, line, ' ');
+        getline(matrix_file, line, ' ');
         unsigned n = std::stoul(line);
-        getline(myfile, line);
+        getline(matrix_file, line);
         unsigned m = std::stoul(line);
 
         if (n != N) {
@@ -149,40 +141,40 @@ void stabilizerCodes::read_H() {
             throw std::runtime_error("read_H: file-specified M not as expected");
         }
         // second line max dv and dc
-        getline(myfile, line, ' ');
+        getline(matrix_file, line, ' ');
         maxDv = std::stoul(line);
-        getline(myfile, line);
+        getline(matrix_file, line);
         maxDc = std::stoul(line);
 
         // third line, dv degrees
         for (unsigned i = 0; i < n - 1; i++) {
-            getline(myfile, line, ' ');
+            getline(matrix_file, line, ' ');
             dv.push_back(std::stoul(line));
             Nvk.emplace_back();
         }
         Nvk.emplace_back();
-        getline(myfile, line);
+        getline(matrix_file, line);
         dv.push_back(std::stoul(line));
 
         // forth line, dc degrees
         for (unsigned i = 0; i < m - 1; i++) {
-            getline(myfile, line, ' ');
+            getline(matrix_file, line, ' ');
             dc.push_back(std::stoul(line));
             Mck.emplace_back();
         }
         Mck.emplace_back();
-        getline(myfile, line);
+        getline(matrix_file, line);
         dc.push_back(std::stoul(line));
 
         // fifth to n+5-th line, dv neighbors
         for (unsigned i = 0; i < n; i++) {
             Nv.emplace_back(dv[i], 0);
             for (unsigned j = 0; j < dv[i] - 1; j++) {
-                getline(myfile, line, ' ');
+                getline(matrix_file, line, ' ');
                 Nv[i][j] = std::stoul(line) - 1;
                 Mck[Nv[i][j]].push_back(j);
             }
-            getline(myfile, line);
+            getline(matrix_file, line);
             Nv[i][dv[i] - 1] = std::stoul(line) - 1;
             Mck[Nv[i][dv[i] - 1]].push_back(dv[i] - 1);
         }
@@ -191,11 +183,11 @@ void stabilizerCodes::read_H() {
         for (unsigned i = 0; i < m; i++) {
             Mc.emplace_back(dc[i], 0);
             for (unsigned j = 0; j < dc[i] - 1; j++) {
-                getline(myfile, line, ' ');
+                getline(matrix_file, line, ' ');
                 Mc[i][j] = std::stoul(line) - 1;
                 Nvk[Mc[i][j]].push_back(j);
             }
-            getline(myfile, line);
+            getline(matrix_file, line);
             Mc[i][dc[i] - 1] = std::stoul(line) - 1;
             Nvk[Mc[i][dc[i] - 1]].push_back(dc[i] - 1);
         }
@@ -203,56 +195,47 @@ void stabilizerCodes::read_H() {
         for (unsigned i = 0; i < m; i++) {
             checkValues.emplace_back(dc[i], 0);
             for (unsigned j = 0; j < dc[i] - 1; j++) {
-                getline(myfile, line, ' ');
+                getline(matrix_file, line, ' ');
                 checkValues[i][j] = std::stoul(line);
             }
-            getline(myfile, line);
+            getline(matrix_file, line);
             checkValues[i][dc[i] - 1] = std::stoul(line);
         }
         // last lines, value of each column
         for (unsigned i = 0; i < n; i++) {
             VariableValues.emplace_back(dv[i], 0);
             for (unsigned j = 0; j < dv[i] - 1; j++) {
-                getline(myfile, line, ' ');
+                getline(matrix_file, line, ' ');
                 VariableValues[i][j] = std::stoul(line);
             }
-            getline(myfile, line);
+            getline(matrix_file, line);
             VariableValues[i][dv[i] - 1] = std::stoul(line);
         }
-        myfile.close();
+        matrix_file.close();
     } else
         std::cout << "Unable to open file" << std::endl;
     checkVal = checkValues;
     varVal = VariableValues;
 }
 void stabilizerCodes::read_G() {
-    std::string codeTypeString;
-    if (mycodetype == stabilizerCodesType::GeneralizedBicycle)
-        codeTypeString = "GB";
-    else if (mycodetype == stabilizerCodesType::HypergraphProduct)
-        codeTypeString = "HP";
-    else if (mycodetype == stabilizerCodesType::toric)
-        codeTypeString = "toric";
-    else
-        throw std::invalid_argument("unimplemented codetype");
-
+    std::string codeTypeString = code_type_string();
     std::string filename = "./PCMs/" + codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) + "/" +
                            codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) + "_G.txt";
     std::string line;
-    std::ifstream myfile;
-    myfile.open(filename);
-    if (myfile.is_open()) {
+    std::ifstream matrix_file;
+    matrix_file.open(filename);
+    if (matrix_file.is_open()) {
         for (unsigned i = 0; i < G_rows; i++) {
             std::vector<unsigned> row(N, 0);
             for (unsigned j = 0; j < N - 1; j++) {
-                getline(myfile, line, ' ');
+                getline(matrix_file, line, ' ');
                 row[j] = std::stoul(line);
             }
-            getline(myfile, line);
+            getline(matrix_file, line);
             row[N - 1] = std::stoul(line);
             G.push_back(row);
         }
-        myfile.close();
+        matrix_file.close();
     } else
         std::cout << "Unable to open file" << std::endl;
 }
@@ -266,12 +249,8 @@ double stabilizerCodes::quantize_belief(double Tau, double Tau1, double Tau2) {
     return ret_val;
 }
 
-unsigned stabilizerCodes::trace_inner_product(unsigned int a, unsigned int b) {
-    if (a == 0 || b == 0)
-        return 0;
-    if (a == b)
-        return 0;
-    return 1;
+inline bool stabilizerCodes::trace_inner_product(unsigned int a, unsigned int b) {
+    return !(a == 0 || b == 0 || a == b);
 }
 
 // TODO: reimplement flooding decode
@@ -485,9 +464,9 @@ std::vector<bool> stabilizerCodes::flooding_decode(unsigned int L, double epsilo
 
 void stabilizerCodes::calculate_syndrome() {
     for (unsigned i = 0; i < M; i++) {
-        unsigned check = 0;
+        bool check = false;
         for (unsigned j = 0; j < dc[i]; j++) {
-            check += trace_inner_product(error[Mc[i][j]], checkVal[i][j]);
+            check = trace_inner_product(error[Mc[i][j]], checkVal[i][j]) ? !check : check;
         }
         syn.push_back(check % 2);
     }
@@ -496,37 +475,35 @@ void stabilizerCodes::calculate_syndrome() {
 std::vector<bool> stabilizerCodes::check_success(const double *Taux, const double *Tauy, const double *Tauz) {
     std::vector<bool> success(2, false);
     error_hat = std::vector<unsigned>(N, 0);
-    errorHatString.clear();
     for (unsigned i = 0; i < N; i++) {
         if (Taux[i] > 0 && Tauy[i] > 0 && Tauz[i] > 0) {
             error_hat[i] = 0;
         } else if (Taux[i] < Tauy[i] && Taux[i] < Tauz[i]) {
             error_hat[i] = 1;
-            errorHatString.emplace_back("X" + std::to_string(i));
         } else if (Tauz[i] < Taux[i] && Tauz[i] < Tauy[i]) {
             error_hat[i] = 2;
-            errorHatString.emplace_back("Z" + std::to_string(i));
         } else {
             error_hat[i] = 3;
-            errorHatString.emplace_back("Y" + std::to_string(i));
         }
     }
     for (unsigned i = 0; i < M; i++) {
-        unsigned check = 0;
+        // unsigned check = 0;
+        bool check = false;
         for (unsigned j = 0; j < dc[i]; j++) {
-            check += trace_inner_product(error_hat[Mc[i][j]], checkVal[i][j]);
+            check = trace_inner_product(error_hat[Mc[i][j]], checkVal[i][j]) ? !check : check;
         }
-        if ((check % 2) != syn[i]) {
+        if ((check) != syn[i]) {
             return success;
         }
     }
     success[0] = true;
     for (unsigned i = 0; i < G_rows; i++) {
-        unsigned check = 0;
+        bool check = false;
         for (unsigned j = 0; j < N; j++) {
-            check += (trace_inner_product(error[j], G[i][j]) + trace_inner_product(error_hat[j], G[i][j]));
+            check = trace_inner_product(error[j], G[i][j]) ? !check : check;
+            check = trace_inner_product(error_hat[j], G[i][j]) ? !check : check;
         }
-        if (check % 2) {
+        if (check) {
             return success;
         }
     }
@@ -534,161 +511,151 @@ std::vector<bool> stabilizerCodes::check_success(const double *Taux, const doubl
     return success;
 }
 
-void stabilizerCodes::load_cn_weights() {
-    std::string codeTypeString;
-    if (mycodetype == stabilizerCodesType::GeneralizedBicycle)
-        codeTypeString = "GB";
-    else if (mycodetype == stabilizerCodesType::HypergraphProduct)
-        codeTypeString = "HP";
-    else if (mycodetype == stabilizerCodesType::toric)
-        codeTypeString = "toric";
-    else
-        throw std::invalid_argument("unimplemented codetype");
+std::string stabilizerCodes::code_type_string() const {
+    switch (mycodetype) {
+    case stabilizerCodesType::GeneralizedBicycle:
+        return "GB";
+    case stabilizerCodesType::HypergraphProduct:
+        return "HP";
+    case stabilizerCodesType::toric:
+        return "toric";
+    }
+    throw std::invalid_argument("unimplemented codetype");
+}
 
-    std::string filename = "./training_results/" + codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) +
-                           "_" + std::to_string(M) + "/weight_cn.txt";
+std::filesystem::path stabilizerCodes::construct_weights_path(std::string_view filename) const {
+    std::string codeTypeString = code_type_string();
+    std::stringstream directory_name_builder;
+    directory_name_builder << codeTypeString << "_" << N << "_" << K << "_" << M;
+    std::filesystem::path path = "training_results";
+    path /= directory_name_builder.str();
+    path /= filename;
+
+    return path;
+}
+
+void stabilizerCodes::load_cn_weights() {
+    auto path = construct_weights_path("weight_cn.txt");
     std::vector<std::vector<std::vector<double>>> weight_cn;
     std::string line;
-    std::ifstream myfile;
-    myfile.open(filename);
+    std::ifstream weights_file;
+    weights_file.open(path.c_str());
     unsigned dec_iter;
-    if (myfile.is_open()) {
-        // first line, number of iterations
-        getline(myfile, line);
-        dec_iter = std::stoul(line);
-        trained_iter = dec_iter;
-        // second line, n m
-        getline(myfile, line, ' ');
-        unsigned n = std::stoul(line);
-        getline(myfile, line);
-        unsigned m = std::stoul(line);
+    if (!weights_file.is_open()) {
+        throw std::runtime_error(std::string("Couldn't open check node weights file ") + path.string());
+    }
+    // first line, number of iterations
+    getline(weights_file, line);
+    dec_iter = std::stoul(line);
+    trained_iter = dec_iter;
+    // second line, n m
+    getline(weights_file, line, ' ');
+    unsigned n = std::stoul(line);
+    getline(weights_file, line);
+    unsigned m = std::stoul(line);
 
-        if (n != N) {
-            throw std::runtime_error("load_cn_weights: file-specified N not as expected");
-        }
-        if (m != M) {
-            throw std::runtime_error("load_cn_weights: file-specified M not as expected");
-        }
-        // rest of the lines, value of each rows of all iterations
-        for (unsigned iter = 0; iter < dec_iter; iter++) {
-            weight_cn.emplace_back();
-        }
-        for (unsigned iter = 0; iter < dec_iter; iter++) {
-            std::vector<std::vector<double>> weight_cn_tmp;
-            for (unsigned i = 0; i < m; i++) {
-                std::vector<double> weight_cn_row(dc[i], 0);
-                for (unsigned j = 0; j < dc[i] - 1; j++) {
-                    getline(myfile, line, ' ');
-                    weight_cn_row[j] = std::stod(line);
-                }
-                getline(myfile, line);
-                weight_cn_row[dc[i] - 1] = std::stod(line);
-                weight_cn_tmp.push_back(weight_cn_row);
+    if (n != N) {
+        throw std::runtime_error("load_cn_weights: file-specified N not as expected");
+    }
+    if (m != M) {
+        throw std::runtime_error("load_cn_weights: file-specified M not as expected");
+    }
+    // rest of the lines, value of each rows of all iterations
+    for (unsigned iter = 0; iter < dec_iter; iter++) {
+        weight_cn.emplace_back();
+    }
+    for (unsigned iter = 0; iter < dec_iter; iter++) {
+        std::vector<std::vector<double>> weight_cn_tmp;
+        for (unsigned i = 0; i < m; i++) {
+            std::vector<double> weight_cn_row(dc[i], 0);
+            for (unsigned j = 0; j < dc[i] - 1; j++) {
+                getline(weights_file, line, ' ');
+                weight_cn_row[j] = std::stod(line);
             }
-            weights_cn.push_back(weight_cn_tmp);
+            getline(weights_file, line);
+            weight_cn_row[dc[i] - 1] = std::stod(line);
+            weight_cn_tmp.push_back(weight_cn_row);
         }
+        weights_cn.push_back(weight_cn_tmp);
+    }
 
-        myfile.close();
-    } else
-        std::cout << "Unable to open file" << std::endl;
+    weights_file.close();
 }
 
 void stabilizerCodes::load_llr_weights() {
-    std::string codeTypeString;
-    if (mycodetype == stabilizerCodesType::GeneralizedBicycle)
-        codeTypeString = "GB";
-    else if (mycodetype == stabilizerCodesType::HypergraphProduct)
-        codeTypeString = "HP";
-    else if (mycodetype == stabilizerCodesType::toric)
-        codeTypeString = "toric";
-    else
-        throw std::invalid_argument("unimplemented codetype");
-
-    std::string filename = "./training_results/" + codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) +
-                           "_" + std::to_string(M) + "/weight_llr.txt";
+    auto path = construct_weights_path("weight_llr.txt");
     std::vector<std::vector<double>> weight_llr;
 
     std::string line;
-    std::ifstream myfile;
-    myfile.open(filename);
+    std::ifstream weights_file;
+    weights_file.open(path.c_str());
     unsigned dec_iter;
-    if (myfile.is_open()) {
-        // first line, number of iterations
-        getline(myfile, line);
-        dec_iter = std::stoul(line);
+    if (!weights_file.is_open()) {
+        throw std::runtime_error(std::string("Couldn't open check LLR weights file ") + path.string());
+    }
+    // first line, number of iterations
+    getline(weights_file, line);
+    dec_iter = std::stoul(line);
 
-        // rest of the lines, value of all llr weights
-        for (unsigned iter = 0; iter < dec_iter; iter++) {
-            weight_llr.emplace_back(N, 0);
-            for (unsigned i = 0; i < N - 1; i++) {
-                getline(myfile, line, ' ');
-                weight_llr[iter][i] = std::stod(line);
-            }
-            getline(myfile, line);
-            weight_llr[iter][N - 1] = std::stod(line);
+    // rest of the lines, value of all llr weights
+    for (unsigned iter = 0; iter < dec_iter; iter++) {
+        weight_llr.emplace_back(N, 0);
+        for (unsigned i = 0; i < N - 1; i++) {
+            getline(weights_file, line, ' ');
+            weight_llr[iter][i] = std::stod(line);
         }
+        getline(weights_file, line);
+        weight_llr[iter][N - 1] = std::stod(line);
+    }
 
-        myfile.close();
-    } else
-        std::cout << "Unable to open file" << std::endl;
+    weights_file.close();
 
     weights_llr = weight_llr;
 }
 
 void stabilizerCodes::load_vn_weights() {
-    std::string codeTypeString;
-    if (mycodetype == stabilizerCodesType::GeneralizedBicycle)
-        codeTypeString = "GB";
-    else if (mycodetype == stabilizerCodesType::HypergraphProduct)
-        codeTypeString = "HP";
-    else if (mycodetype == stabilizerCodesType::toric)
-        codeTypeString = "toric";
-    else
-        throw std::invalid_argument("unimplemented codetype");
-
-    std::string filename = "./training_results/" + codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) +
-                           "_" + std::to_string(M) + "/weight_vn.txt";
+    auto path = construct_weights_path("weight_vn.txt");
     std::vector<std::vector<std::vector<double>>> weight_cn;
     std::string line;
-    std::ifstream myfile;
-    myfile.open(filename);
+    std::ifstream weights_file;
+    weights_file.open(path.c_str());
     unsigned dec_iter;
-    if (myfile.is_open()) {
-        // first line, number of iterations
-        getline(myfile, line);
-        dec_iter = std::stoul(line);
-        // second line, n m
-        getline(myfile, line, ' ');
-        unsigned n = std::stoul(line);
-        getline(myfile, line);
-        unsigned m = std::stoul(line);
+    if (!weights_file.is_open()) {
+        throw std::runtime_error(std::string("Couldn't open variable node weights file ") + path.string());
+    }
+    // first line, number of iterations
+    getline(weights_file, line);
+    dec_iter = std::stoul(line);
+    // second line, n m
+    getline(weights_file, line, ' ');
+    unsigned n = std::stoul(line);
+    getline(weights_file, line);
+    unsigned m = std::stoul(line);
 
-        if (n != N) {
-            throw std::runtime_error("load_vn_weights: file-specified N not as expected");
-        }
-        if (m != M) {
-            throw std::runtime_error("load_vb_weights: file-specified M not as expected");
-        }
-        // rest of the lines, value of each rows of all iterations
-        for (unsigned iter = 0; iter < dec_iter; iter++) {
-            weight_cn.emplace_back();
-        }
-        for (unsigned iter = 0; iter < dec_iter; iter++) {
-            std::vector<std::vector<double>> weight_cn_tmp;
-            for (unsigned i = 0; i < n; i++) {
-                std::vector<double> weight_cn_row(dv[i], 0);
-                for (unsigned j = 0; j < dv[i] - 1; j++) {
-                    getline(myfile, line, ' ');
-                    weight_cn_row[j] = std::stod(line);
-                }
-                getline(myfile, line);
-                weight_cn_row[dv[i] - 1] = std::stod(line);
-                weight_cn_tmp.push_back(weight_cn_row);
+    if (n != N) {
+        throw std::runtime_error("load_vn_weights: file-specified N not as expected");
+    }
+    if (m != M) {
+        throw std::runtime_error("load_vn_weights: file-specified M not as expected");
+    }
+    // rest of the lines, value of each rows of all iterations
+    for (unsigned iter = 0; iter < dec_iter; iter++) {
+        weight_cn.emplace_back();
+    }
+    for (unsigned iter = 0; iter < dec_iter; iter++) {
+        std::vector<std::vector<double>> weight_cn_tmp;
+        for (unsigned i = 0; i < n; i++) {
+            std::vector<double> weight_cn_row(dv[i], 0);
+            for (unsigned j = 0; j < dv[i] - 1; j++) {
+                getline(weights_file, line, ' ');
+                weight_cn_row[j] = std::stod(line);
             }
-            weights_vn.push_back(weight_cn_tmp);
+            getline(weights_file, line);
+            weight_cn_row[dv[i] - 1] = std::stod(line);
+            weight_cn_tmp.push_back(weight_cn_row);
         }
+        weights_vn.push_back(weight_cn_tmp);
+    }
 
-        myfile.close();
-    } else
-        std::cout << "Unable to open file" << std::endl;
+    weights_file.close();
 }
