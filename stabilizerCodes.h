@@ -14,25 +14,22 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include "fileReader.h"
 
-enum class stabilizerCodesType { GeneralizedBicycle = 0, HypergraphProduct = 1, toric = 3 };
+
 
 class stabilizerCodes {
   public:
-    stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, bool trained = false);
+    stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, const fileReader fr, bool trained = false);
 
     std::vector<bool> decode(unsigned int L, double epsilon);
 
     std::vector<bool> flooding_decode(unsigned int L, double epsilon);
 
     std::vector<bool> check_success(const double *Taux, const double *Tauy, const double *Tauz);
-    void load_cn_weights();
-    void load_vn_weights();
-    void load_llr_weights();
-    void read_H();
-    void read_G();
+
     static inline bool trace_inner_product(unsigned a, unsigned b);
-    bool check_symplectic();
+
     void add_error_given_epsilon(double epsilon);
 
     // void add_error_given_positions(int pos[], int error[], int size);
@@ -42,8 +39,7 @@ class stabilizerCodes {
     static double quantize_belief(double Taux, double Tauy, double Tauz);
 
   private:
-    std::string code_type_string() const;
-    std::filesystem::path construct_weights_path(std::string_view filename) const;
+
 
     bool print_msg = false;
 

@@ -9,8 +9,10 @@
  *     Proc. IEEE Inform. Theory Workshop (ITW), Saint-Malo, France, Apr. 2023, https://arxiv.org/abs/2212.10245
  */
 #include "stabilizerCodes.h"
+
 #include <iostream>
 #include <omp.h>
+
 int main() {
     unsigned n = 46;
     unsigned k = 2;
@@ -20,8 +22,8 @@ int main() {
     bool trained = true;
     double ep0 = 0.1;
     stabilizerCodesType codeType = stabilizerCodesType::GeneralizedBicycle;
-    stabilizerCodes code(n, k, m, codeType);
-    code.check_symplectic();
+    fileReader matrix_suppiler(n, k, m, codeType, trained);
+    matrix_suppiler.check_symplectic();
 
     int max_frame_errors = 300;
     int max_decoded_words = 45000000;
@@ -32,10 +34,12 @@ int main() {
     };
     std::cout << "% [[" << n << "," << k << +"]], " << m << " checks, " << decIterNum << " iter ";
     if (trained)
-        std::cout << "trained";
+        std::cout << ",trained";
     std::cout << std::endl;
 
-    std::cout << "% collect " << max_frame_errors << " FEs or " << max_decoded_words << " decoded words" << std::endl;
+    std::cout << "% collect " << max_frame_errors << " frame errors or " << max_decoded_words << " decoded error patterns" << std::endl;
+
+
 
     //    omp_set_num_threads(1);
     for (double epsilon : ep_list) {
@@ -45,7 +49,7 @@ int main() {
 #pragma omp parallel
         {
             while (failure <= max_frame_errors && total_decoding <= max_decoded_words) {
-                stabilizerCodes code(n, k, m, codeType, trained);
+                stabilizerCodes code(n, k, m, codeType, matrix_suppiler, trained);
                 code.add_error_given_epsilon(epsilon);
                 std::vector<bool> success;
                 success = code.decode(decIterNum, ep0);
@@ -59,6 +63,7 @@ int main() {
         }
         std::cout << "% FE " << failure << ", total dec. " << total_decoding << "\\\\" << std::endl;
         std::cout << epsilon << " " << (failure / total_decoding) << "\\\\" << std::endl;
+
     }
     return 0;
 }
