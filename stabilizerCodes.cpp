@@ -15,7 +15,7 @@
 #include <random>
 #include <sstream>
 
-stabilizerCodes::stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, const fileReader fr,
+stabilizerCodes::stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, const fileReader &fr,
                                  bool trained) {
     mycodetype = codeType;
     N = n;
@@ -104,7 +104,7 @@ std::vector<bool> stabilizerCodes::flooding_decode(unsigned int L, double epsilo
     std::vector<bool> success(2, false);
     double L0 = log(3.0 * (1 - epsilon) / epsilon);
 
-    double lambda0 = log((1 + exp(-L0)) / (exp(-L0) + exp(-L0)));
+    double lambda0 = log((1 + exp(-L0)) / (2 * exp(-L0)));
     //
     // Allocate memory for messages
     double **mc2v, **mv2c;
@@ -158,7 +158,7 @@ std::vector<bool> stabilizerCodes::flooding_decode(unsigned int L, double epsilo
             double sign_prod = (syn[i] == 0 ? 1.0 : -1.0);
             // Sum-Product
             for (unsigned j = 0; j < dc[i]; j++) {
-                if (mv2c[Mc[i][j]][Mck[i][j]] != 0)
+                if (mv2c[Mc[i][j]][Mck[i][j]] != 0.0)
                     phi_msg[j] = -1.0 * log(tanh(fabs(mv2c[Mc[i][j]][Mck[i][j]]) / 2.0));
                 else
                     phi_msg[j] = 60;
@@ -171,7 +171,7 @@ std::vector<bool> stabilizerCodes::flooding_decode(unsigned int L, double epsilo
                 double phi_phi_sum = 60;
                 if (phi_extrinsic_phi_sum != 0)
                     phi_phi_sum = -1.0 * log(tanh(phi_extrinsic_phi_sum / 2.0));
-                mc2v[i][j] = phi_phi_sum * sign_prod / (mv2c[Mc[i][j]][Mck[i][j]] >= 0.0 ? 1.0 : -1.0);
+                mc2v[i][j] = phi_phi_sum * sign_prod * (mv2c[Mc[i][j]][Mck[i][j]] >= 0.0 ? 1.0 : -1.0);
                 if (mTrained && decIter < trained_iter)
                     mc2v[i][j] *= weights_cn[decIter][i][j];
                 // sum_cn_msg += fabs(mc2v[i][j]);

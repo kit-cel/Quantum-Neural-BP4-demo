@@ -18,7 +18,7 @@
 
 class stabilizerCodes {
   public:
-    stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, const fileReader fr,
+    stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, const fileReader &fr,
                     bool trained = false);
 
     std::vector<bool> decode(unsigned int L, double epsilon);
