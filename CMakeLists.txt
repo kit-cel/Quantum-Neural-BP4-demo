@@ -14,9 +14,8 @@ include_directories(.)
 add_executable(NBP_jupyter
         simulateFER.cpp
         stabilizerCodes.cpp
-        stabilizerCodes.h
         fileReader.cpp
-        fileReader.h)
+        )
 
 if(MSVC)
     target_compile_options(NBP_jupyter PRIVATE /W4 /WX)
