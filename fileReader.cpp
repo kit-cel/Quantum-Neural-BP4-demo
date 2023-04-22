@@ -8,8 +8,6 @@
 #include <random>
 #include <sstream>
 
-
-
 fileReader::fileReader(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, bool trained) {
     mycodetype = codeType;
     N = n;
@@ -26,7 +24,6 @@ fileReader::fileReader(unsigned n, unsigned k, unsigned m, stabilizerCodesType c
     }
 }
 
-
 void fileReader::read_H() {
     std::string codeTypeString = code_type_string();
     std::string filename = "./PCMs/" + codeTypeString + "_" + std::to_string(N) + "_" + std::to_string(K) + "/" +
@@ -36,7 +33,7 @@ void fileReader::read_H() {
     // Mck same shape and Nv, but its value k means the i-th CN being the k-th neigbor of j-th VN
     std::vector<std::vector<unsigned>> checkValues;
     std::vector<std::vector<unsigned>> VariableValues;
-    
+
     std::string line;
     std::ifstream matrix_file;
     matrix_file.open(filename);
@@ -172,7 +169,7 @@ void fileReader::load_cn_weights() {
     unsigned n = std::stoul(line);
     getline(weights_file, line);
     unsigned m = std::stoul(line);
-    
+
     if (n != N) {
         throw std::runtime_error("load_cn_weights: file-specified N not as expected");
     }
@@ -290,7 +287,6 @@ std::filesystem::path fileReader::construct_weights_path(std::string_view filena
     return path;
 }
 
-
 std::string fileReader::code_type_string() const {
     switch (mycodetype) {
     case stabilizerCodesType::GeneralizedBicycle:
@@ -349,6 +345,4 @@ bool fileReader::check_symplectic() {
     return true;
 }
 
-inline bool fileReader::trace_inner_product(unsigned int a, unsigned int b) {
-    return !(a == 0 || b == 0 || a == b);
-}
+inline bool fileReader::trace_inner_product(unsigned int a, unsigned int b) { return !(a == 0 || b == 0 || a == b); }

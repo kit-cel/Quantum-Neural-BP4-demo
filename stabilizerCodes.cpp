@@ -15,8 +15,8 @@
 #include <random>
 #include <sstream>
 
-
-stabilizerCodes::stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, const fileReader fr, bool trained) {
+stabilizerCodes::stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, const fileReader fr,
+                                 bool trained) {
     mycodetype = codeType;
     N = n;
     K = k;
@@ -34,13 +34,11 @@ stabilizerCodes::stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerC
     Nvk = fr.Nvk;
     Mck = fr.Mck;
     G = fr.G;
-    if (trained){
+    if (trained) {
         weights_cn = fr.weights_cn;
         weights_vn = fr.weights_vn;
         weights_llr = fr.weights_llr;
     }
-
-
 }
 
 std::vector<bool> stabilizerCodes::decode(unsigned int L, double epsilon) {
@@ -51,8 +49,6 @@ std::vector<bool> stabilizerCodes::decode(unsigned int L, double epsilon) {
     error_hat = std::vector<unsigned>(N, 0);
     return flooding_decode(L, epsilon);
 }
-
-
 
 void stabilizerCodes::add_error_given_epsilon(double epsilon) {
     error.clear();
@@ -82,7 +78,6 @@ void stabilizerCodes::add_error_given_epsilon(double epsilon) {
 }
 
 // void stabilizerCodes::add_error_given_positions(int *pos, int *error, int size) {}
-
 
 double stabilizerCodes::quantize_belief(double Tau, double Tau1, double Tau2) {
     double nom = log1p(exp(-1.0 * Tau));
@@ -355,5 +350,3 @@ std::vector<bool> stabilizerCodes::check_success(const double *Taux, const doubl
     success[1] = true;
     return success;
 }
-
-

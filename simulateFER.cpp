@@ -37,9 +37,8 @@ int main() {
         std::cout << ",trained";
     std::cout << std::endl;
 
-    std::cout << "% collect " << max_frame_errors << " frame errors or " << max_decoded_words << " decoded error patterns" << std::endl;
-
-
+    std::cout << "% collect " << max_frame_errors << " frame errors or " << max_decoded_words
+              << " decoded error patterns" << std::endl;
 
     //    omp_set_num_threads(1);
     for (double epsilon : ep_list) {
@@ -63,7 +62,6 @@ int main() {
         }
         std::cout << "% FE " << failure << ", total dec. " << total_decoding << "\\\\" << std::endl;
         std::cout << epsilon << " " << (failure / total_decoding) << "\\\\" << std::endl;
-
     }
     return 0;
 }
