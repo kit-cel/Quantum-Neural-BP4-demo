@@ -24,8 +24,8 @@ int main(int argc, char *argv[]) {
     bool trained = true;
     double ep0 = 0.1;
     stabilizerCodesType codeType = stabilizerCodesType::GeneralizedBicycle;
-    fileReader matrix_suppiler(n, k, m, codeType, trained);
-    matrix_suppiler.check_symplectic();
+    fileReader matrix_supplier(n, k, m, codeType, trained);
+    matrix_supplier.check_symplectic();
 
     constexpr int default_max_frame_errors = 300;
     constexpr int default_max_decoded_words = 45000000;
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
 #pragma omp parallel
         {
             while (failure <= max_frame_errors && total_decoding <= max_decoded_words) {
-                stabilizerCodes code(n, k, m, codeType, matrix_suppiler, trained);
+                stabilizerCodes code(n, k, m, codeType, matrix_supplier, trained);
                 code.add_error_given_epsilon(epsilon);
                 std::vector<bool> success;
                 success = code.decode(decIterNum, ep0);
