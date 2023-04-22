@@ -15,6 +15,7 @@ add_executable(NBP_jupyter
         simulateFER.cpp
         stabilizerCodes.cpp
         fileReader.cpp
+        helpers.cpp
         )
 
 if(MSVC)
