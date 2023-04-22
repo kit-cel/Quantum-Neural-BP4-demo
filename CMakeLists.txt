@@ -21,5 +21,5 @@ add_executable(NBP_jupyter
 if(MSVC)
     target_compile_options(NBP_jupyter PRIVATE /W4 /WX)
 else()
-    target_compile_options(NBP_jupyter PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(NBP_jupyter PRIVATE -Wall -Wextra -Wpedantic -ffast-math)
 endif()
