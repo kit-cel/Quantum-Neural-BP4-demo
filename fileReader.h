@@ -11,12 +11,11 @@
 #include <string_view>
 #include <vector>
 enum class stabilizerCodesType { GeneralizedBicycle = 0, HypergraphProduct = 1, toric = 3 };
-class fileReader{
+class fileReader {
   public:
     fileReader(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, bool trained = false);
     std::string code_type_string() const;
     std::filesystem::path construct_weights_path(std::string_view filename) const;
-
 
     void load_cn_weights();
     void load_vn_weights();
@@ -51,4 +50,3 @@ class fileReader{
     std::vector<std::vector<std::vector<double>>> weights_vn;
     std::vector<std::vector<double>> weights_llr;
 };
-

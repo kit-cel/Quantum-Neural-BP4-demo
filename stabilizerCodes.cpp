@@ -15,8 +15,8 @@
 #include <random>
 #include <sstream>
 
-
-stabilizerCodes::stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, const fileReader fr, bool trained) {
+stabilizerCodes::stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, const fileReader &fr,
+                                 bool trained) {
     mycodetype = codeType;
     N = n;
     K = k;
@@ -34,13 +34,11 @@ stabilizerCodes::stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerC
     Nvk = fr.Nvk;
     Mck = fr.Mck;
     G = fr.G;
-    if (trained){
+    if (trained) {
         weights_cn = fr.weights_cn;
         weights_vn = fr.weights_vn;
         weights_llr = fr.weights_llr;
     }
-
-
 }
 
 std::vector<bool> stabilizerCodes::decode(unsigned int L, double epsilon) {
@@ -51,8 +49,6 @@ std::vector<bool> stabilizerCodes::decode(unsigned int L, double epsilon) {
     error_hat = std::vector<unsigned>(N, 0);
     return flooding_decode(L, epsilon);
 }
-
-
 
 void stabilizerCodes::add_error_given_epsilon(double epsilon) {
     error.clear();
@@ -83,7 +79,6 @@ void stabilizerCodes::add_error_given_epsilon(double epsilon) {
 
 // void stabilizerCodes::add_error_given_positions(int *pos, int *error, int size) {}
 
-
 double stabilizerCodes::quantize_belief(double Tau, double Tau1, double Tau2) {
     double nom = log1p(exp(-1.0 * Tau));
     double denom = std::max(-1.0 * Tau1, -1.0 * Tau2) + log1p(exp(-1.0 * fabs((Tau1 - Tau2))));
@@ -109,7 +104,7 @@ std::vector<bool> stabilizerCodes::flooding_decode(unsigned int L, double epsilo
     std::vector<bool> success(2, false);
     double L0 = log(3.0 * (1 - epsilon) / epsilon);
 
-    double lambda0 = log((1 + exp(-L0)) / (exp(-L0) + exp(-L0)));
+    double lambda0 = log((1 + exp(-L0)) / (2 * exp(-L0)));
     //
     // Allocate memory for messages
     double **mc2v, **mv2c;
@@ -163,7 +158,7 @@ std::vector<bool> stabilizerCodes::flooding_decode(unsigned int L, double epsilo
             double sign_prod = (syn[i] == 0 ? 1.0 : -1.0);
             // Sum-Product
             for (unsigned j = 0; j < dc[i]; j++) {
-                if (mv2c[Mc[i][j]][Mck[i][j]] != 0)
+                if (mv2c[Mc[i][j]][Mck[i][j]] != 0.0)
                     phi_msg[j] = -1.0 * log(tanh(fabs(mv2c[Mc[i][j]][Mck[i][j]]) / 2.0));
                 else
                     phi_msg[j] = 60;
@@ -176,7 +171,7 @@ std::vector<bool> stabilizerCodes::flooding_decode(unsigned int L, double epsilo
                 double phi_phi_sum = 60;
                 if (phi_extrinsic_phi_sum != 0)
                     phi_phi_sum = -1.0 * log(tanh(phi_extrinsic_phi_sum / 2.0));
-                mc2v[i][j] = phi_phi_sum * sign_prod / (mv2c[Mc[i][j]][Mck[i][j]] >= 0.0 ? 1.0 : -1.0);
+                mc2v[i][j] = phi_phi_sum * sign_prod * (mv2c[Mc[i][j]][Mck[i][j]] >= 0.0 ? 1.0 : -1.0);
                 if (mTrained && decIter < trained_iter)
                     mc2v[i][j] *= weights_cn[decIter][i][j];
                 // sum_cn_msg += fabs(mc2v[i][j]);
@@ -355,5 +350,3 @@ std::vector<bool> stabilizerCodes::check_success(const double *Taux, const doubl
     success[1] = true;
     return success;
 }
-
-

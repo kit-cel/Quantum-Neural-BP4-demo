@@ -10,17 +10,16 @@
  */
 #ifndef BPDECODING_STABILIZIERCODES_H
 #define BPDECODING_STABILIZIERCODES_H
+#include "fileReader.h"
 #include <filesystem>
 #include <string>
 #include <string_view>
 #include <vector>
-#include "fileReader.h"
-
-
 
 class stabilizerCodes {
   public:
-    stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, const fileReader fr, bool trained = false);
+    stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, const fileReader &fr,
+                    bool trained = false);
 
     std::vector<bool> decode(unsigned int L, double epsilon);
 
@@ -39,8 +38,6 @@ class stabilizerCodes {
     static double quantize_belief(double Taux, double Tauy, double Tauz);
 
   private:
-
-
     bool print_msg = false;
 
     stabilizerCodesType mycodetype;
