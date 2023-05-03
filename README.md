@@ -20,5 +20,9 @@ The C++ codes contains:
 ## Abstract
 The recent success in constructing asymptotically good quantum low-density parity-check (QLDPC) codes makes this family of codes a promising candidate for error-correcting schemes in quantum computing. However, conventional belief propagation (BP) decoding of QLDPC codes does not yield satisfying performance due to the presence of unavoidable short cycles in their Tanner graph and the special degeneracy phenomenon. In this work, we propose to decode QLDPC codes based on a check matrix with redundant rows, generated from linear combinations of the rows in the original check matrix. This approach yields a significant improvement in decoding performance with the additional advantage of very low decoding latency. Furthermore, we propose a novel neural belief propagation decoder based on the quaternary BP decoder of QLDPC codes which leads to further decoding performance improvements.
 
+## Funding Acknowledgment
+This work has received funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation programme (grant agreement No. 101001899).
+
+
 ## 
 <sub> Sisi Miao would like to thank Marcus Müller for improving the quality of the codes.</sub>
