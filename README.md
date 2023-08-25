@@ -16,6 +16,7 @@ The C++ codes contain:
 
 
 [1] S. Miao, A. Schnerring, H. Li and L. Schmalen, "Neural belief propagation decoding of quantum LDPC codes using overcomplete check matrices," Proc. IEEE Inform. Theory Workshop (ITW), Saint-Malo, France, Apr. 2023, https://arxiv.org/abs/2212.10245
+
 [2] S. Miao, A. Schnerring, H. Li and L. Schmalen, "Quaternary Neural Belief Propagation Decoding of Quantum LDPC Codes with Overcomplete Check Matrices." arXiv preprint arXiv:2308.08208 (2023).
 
 ## Abstract
