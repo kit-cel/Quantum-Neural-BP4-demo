@@ -1,13 +1,13 @@
 # Neural Belief Propagation Decoding of Quantum LDPC Codes Using Overcomplete Check Matrices
 ## Sisi Miao, Alexander Schnerring, Haizheng Li, and Laurent Schmalen
 
-This repository provides an implementation that produces the results presented in [1] and [2]. It consists of two main core parts: One is the Jupyter Notebook which implements the neural BP network. Another is the C++ codes which evaluates the performance of the trained decoder.
+This repository provides an implementation that produces the results presented in [1] and its extended version[2]. It consists of two main core parts: One is the Jupyter Notebook which implements the neural BP network. Another is the C++ codes which evaluates the performance of the trained decoder.
 
 Specifically, the Jupyter Notebook contains:
 * The neural BP4 decoder, which is defined as the class `NBP_oc`
 * Functions for training, which can be run on a CPU or GPU
 * Calls to C++ functions that evaluate the trained decoder
-* Overcomplete check matrices used in [1], which are provided in the ./PCMs folder
+* Overcomplete check matrices that we constructed for the code used, which are provided in the ./PCMs folder
 
 The C++ codes contain:
 * `simulateFER`, which calls the decoder to simulate random errors with different depolarizing probabilities. The output is the depolarizing probability versus frame error rate.
