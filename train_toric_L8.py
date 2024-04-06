@@ -783,15 +783,14 @@ codeType = 'toric'
 lr = 1
 # training for fixed epsilon_0
 ep0 = 0.1
+#training error sampled from ep1, ep1+sep,ep1+2*sep...
 ep1=0.03
 num_points = 6
 sep=0.01
 if m==3*n:
     ep0 = 0.37
     ep1+=0.06
-# train on errors of weight ranging from r1 to r2
-r1 = 1
-r2 = 5
+
 # number of updates
 n_batches = 100
 # number of error patterns in each mini batch
@@ -814,12 +813,13 @@ decoder = NBP_oc(n, k, m, m1, m2, codeType, n_iterations, batch_size=batch_size,
 # plt.show()
 
 
-# use Adam
+
 optimizer = torch.optim.SGD([
     {'params': decoder.weights_llr, 'lr': lr},
     {'params': decoder.weights_vn,'lr': lr},
     {'params': decoder.weights_cn,'lr': lr}
     ])
+# could also use Adam, not making too much difference
 # optimizer = torch.optim.Adam(parameters, lr=lr)
 scheduler = torch.optim.lr_scheduler.LinearLR(optimizer,start_factor=1.0, end_factor=0.1, total_iters=1200)
 
@@ -835,12 +835,12 @@ print(f'learning rate = {lr}\n')
 
 cpp_executable = './sim_FER'
 cpp_parameters = ['-d','128','2',str(m), '25', '1', '-i',str(ep0),'-r','0.15','0.015','0.015']
-# pre-training stage, basically only the parameters for the first iteration is trained
+# training stage
 loss = torch.Tensor()
 
 loss_pre_train = training_loop(decoder, optimizer, ep1, sep,num_points, ep0, n_batches, path, scheduler=scheduler)
 loss = torch.cat((loss, loss_pre_train), dim=0)
-plot_loss(loss, path)
+plot_loss(loss, path) #its ok if it doesn't converge to 0
 subprocess.call([cpp_executable] + cpp_parameters)
 
 
