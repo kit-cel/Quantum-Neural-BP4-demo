@@ -8,9 +8,7 @@ import numpy as np
 # helper functions
 import sys
 import torch.nn as nn
-import numpy as np
 import os
-import torch
 import subprocess
 class NBP_oc(nn.Module):
     def __init__(self, n: int, k: int, m: int, m1: int, m2: int, codeType: str, n_iterations: int,
