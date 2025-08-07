@@ -23,6 +23,7 @@ stabilizerCodes::stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerC
     M = m;
     G_rows = N + K;
     mTrained = trained;
+    trained_iter = fr.trained_iter;
     dc = fr.dc;
     dv = fr.dv;
     maxDc = fr.maxDc;
