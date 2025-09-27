@@ -11,15 +11,13 @@
 #ifndef BPDECODING_STABILIZIERCODES_H
 #define BPDECODING_STABILIZIERCODES_H
 #include "fileReader.h"
-#include <filesystem>
 #include <string>
 #include <string_view>
 #include <vector>
 
 class stabilizerCodes {
   public:
-    stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, const fileReader &fr,
-                    bool trained = false);
+    stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, const fileReader &fr, bool trained = false, std::vector<std::string> previousErrorString = {}, std::vector<unsigned> previousError = {});
 
     std::vector<bool> decode(unsigned int L, double epsilon);
 
@@ -27,15 +25,41 @@ class stabilizerCodes {
 
     std::vector<bool> check_success(const double *Taux, const double *Tauy, const double *Tauz);
 
+		std::vector<bool> ensemble_decode(unsigned int L, double epsilon, unsigned int ensemble_size);
+
     static inline bool trace_inner_product(unsigned a, unsigned b);
 
     void add_error_given_epsilon(double epsilon);
+
+    void set_error_given_epsilon(std::vector<std::string> errorString, std::vector<unsigned> error);
+  	
+  	std::vector<double> Taus;
 
     // void add_error_given_positions(int pos[], int error[], int size);
 
     void calculate_syndrome(); // also check if the error is all 0, if true, not decoding needed
 
     static double quantize_belief(double Taux, double Tauy, double Tauz);
+
+    const std::vector<unsigned>& getError() const{
+    	return error;
+    }
+
+    const std::vector<std::string>& getErrorString() const{
+    	return errorString;
+    }
+
+    const std::vector<unsigned>& getErrorHat() const{
+    	return error_hat;
+    }
+  	
+    void setSyndrome(const std::vector<unsigned>& newSyn){
+    	syn = newSyn;
+    }
+
+    const std::vector<unsigned>& getSyndrome() const{
+    	return syn;
+    }
 
   private:
     bool print_msg = false;

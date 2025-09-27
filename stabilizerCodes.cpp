@@ -14,15 +14,16 @@
 #include <iostream>
 #include <random>
 #include <sstream>
+#include <vector>
 
-stabilizerCodes::stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, const fileReader &fr,
-                                 bool trained) {
+stabilizerCodes::stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerCodesType codeType, const fileReader &fr,  bool trained, std::vector<std::string> previousErrorString, std::vector<unsigned> previousError) {
     mycodetype = codeType;
     N = n;
     K = k;
     M = m;
     G_rows = N + K;
     mTrained = trained;
+    trained_iter = fr.trained_iter;
     dc = fr.dc;
     dv = fr.dv;
     maxDc = fr.maxDc;
@@ -34,6 +35,8 @@ stabilizerCodes::stabilizerCodes(unsigned n, unsigned k, unsigned m, stabilizerC
     Nvk = fr.Nvk;
     Mck = fr.Mck;
     G = fr.G;
+    error = previousError;
+    errorString = previousErrorString;
     if (trained) {
         weights_cn = fr.weights_cn;
         weights_vn = fr.weights_vn;
@@ -48,6 +51,14 @@ std::vector<bool> stabilizerCodes::decode(unsigned int L, double epsilon) {
     calculate_syndrome();
     error_hat = std::vector<unsigned>(N, 0);
     return flooding_decode(L, epsilon);
+}
+
+void stabilizerCodes::set_error_given_epsilon(std::vector<std::string> FixedErrorString, std::vector<unsigned> FixedError){
+    error.clear();
+    errorString.clear();
+
+    error = FixedError;
+    errorString = FixedErrorString;
 }
 
 void stabilizerCodes::add_error_given_epsilon(double epsilon) {

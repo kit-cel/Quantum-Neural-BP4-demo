@@ -9,22 +9,27 @@
  *     Proc. IEEE Inform. Theory Workshop (ITW), Saint-Malo, France, Apr. 2023, https://arxiv.org/abs/2212.10245
  */
 #include "stabilizerCodes.h"
+#include "ensembleDecoder.h"
 
 #include "helpers.h"
 
 #include <iostream>
 #include <omp.h>
+#include <vector>
 
 int main(int argc, char *argv[]) {
-    unsigned n = 46;
+    unsigned n = 72;
     unsigned k = 2;
-    unsigned m = 800;
+    unsigned m = 216;
 
-    int decIterNum = 6;
+    int decIterNum = 25;
     bool trained = true;
-    double ep0 = 0.1;
-    stabilizerCodesType codeType = stabilizerCodesType::GeneralizedBicycle;
-    fileReader matrix_supplier(n, k, m, codeType, trained);
+    double ep0 = 0.4;
+    stabilizerCodesType codeType = stabilizerCodesType::toric;
+
+    // Every decoder in the ensemble needs to be specified here
+    fileReader first_matrix_supplier(n, k, m, codeType, trained, "first-decoder");
+    fileReader second_matrix_supplier(n, k, m, codeType, trained, "second-decoder");
     matrix_supplier.check_symplectic();
 
     constexpr int default_max_frame_errors = 300;
@@ -60,16 +65,38 @@ int main(int argc, char *argv[]) {
 #pragma omp parallel
         {
             while (failure <= max_frame_errors && total_decoding <= max_decoded_words) {
-                stabilizerCodes code(n, k, m, codeType, matrix_supplier, trained);
-                code.add_error_given_epsilon(epsilon);
                 std::vector<bool> success;
-                success = code.decode(decIterNum, ep0);
+                // Create the same error pattern for all paths, the supplied matrix does not
+                // have to be from a path in the ensemble
+                stabilizerCodes errorCreator(n, k, m, codeType, first_matrix_supplier, trained);
+          			errorCreator.add_error_given_epsilon(epsilon);
+
+         				ensembleDecoder ens;
+                stabilizerCodes first(n, k, m, codeType, first_matrix_supplier, trained);
+                stabilizerCodes second(n, k, m, codeType, second_matrix_supplier, trained);
+
+                ens.add_decoder(first);
+                ens.add_decoder(second);
+                ens.setErrors(errorCreator.getErrorString(), errorCreator.getError());
+                // NBED Curve
+        				// success = ens.decodeAllPaths(decIterNum, ep0);
+
+				        // LER-NBED curve
+								for(int i = 0 ; i < ens.list_of_decoders.size(); i++){
+										success = ens.list_of_decoders[i]->decode(decIterNum, ep0);
+										if (success[1]) {
+											break;
+										}
+								}
+        				
 #pragma omp critical
                 {
-                    if (!success[1])
-                        failure += 1;
-                    total_decoding += 1;
-                }
+									if (!success[1]) 
+									{
+											failure += 1;
+									}
+									total_decoding += 1;
+											}
             }
         }
         std::cout << "% FE " << failure << ", total dec. " << total_decoding << "\\\\" << std::endl;
